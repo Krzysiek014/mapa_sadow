@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wolne Stanowiska Asesorskie 2026 — Mapa Sądów</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2230;
+    --border: #2a2f3d;
+    --accent: #e8c547;
+    --accent2: #4fc3a1;
+    --text: #e8eaf2;
+    --muted: #7a8099;
+    --red: #e85b5b;
+    --pin-cywilny: #4fc3a1;
+    --pin-karny: #e85b5b;
+    --pin-rodzinny: #b06de8;
+    --pin-gospodarczy: #e88f3a;
+    --pin-pracy: #4a9fe8;
+    --pin-mixed: #e8c547;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .header-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    flex: 1;
+    min-width: 200px;
+  }
+  .header-title span {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: var(--accent);
+  }
+  .stat-lbl {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .main-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    height: calc(100vh - 80px);
+  }
+
+  #map {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sidebar {
+    width: 360px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-section {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+
+  .section-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  #locationInput {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    padding: 9px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #locationInput:focus { border-color: var(--accent); }
+  #locationInput::placeholder { color: var(--muted); }
+
+  .btn {
+    background: var(--accent);
+    color: #0d0f14;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 9px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn.secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.68rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 3px 7px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .legend-item:hover { border-color: var(--border); color: var(--text); }
+  .legend-item.active { border-color: var(--border); color: var(--text); }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .apelacja-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .apelacja-btn {
+    font-size: 0.65rem;
+    padding: 4px 9px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: all 0.15s;
+  }
+  .apelacja-btn:hover, .apelacja-btn.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  .results-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+  .results-area::-webkit-scrollbar { width: 4px; }
+  .results-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .result-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .result-item:hover { background: var(--surface2); }
+  .result-item.highlighted { background: rgba(232,197,71,0.06); border-left: 3px solid var(--accent); }
+
+  .rank-badge {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--accent);
+    min-width: 22px;
+    padding-top: 2px;
+  }
+
+  .result-body { flex: 1; min-width: 0; }
+  .result-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+  .result-meta {
+    font-size: 0.68rem;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .result-dist {
+    color: var(--accent2);
+    font-weight: 500;
+  }
+  .result-vacancies {
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .result-apel { color: var(--muted); }
+
+  .info-panel {
+    display: none;
+    background: var(--surface2);
+    border-top: 2px solid var(--accent);
+    padding: 18px 20px;
+    max-height: 55%;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .info-panel.visible { display: block; }
+  .info-panel::-webkit-scrollbar { width: 4px; }
+  .info-panel::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .info-close {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0;
+    margin-left: 8px;
+  }
+  .info-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 4px;
+    padding-right: 24px;
+    line-height: 1.3;
+  }
+  .info-city {
+    font-size: 0.75rem;
+    color: var(--accent2);
+    margin-bottom: 12px;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .info-row-key { color: var(--muted); }
+  .info-row-val { color: var(--text); font-weight: 500; text-align: right; max-width: 60%; }
+
+  .wydzial-list {
+    margin-top: 10px;
+  }
+  .wydzial-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin: 2px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .wydzial-tag.cywilny { border-color: var(--pin-cywilny); color: var(--pin-cywilny); }
+  .wydzial-tag.karny { border-color: var(--pin-karny); color: var(--pin-karny); }
+  .wydzial-tag.rodzinny { border-color: var(--pin-rodzinny); color: var(--pin-rodzinny); }
+  .wydzial-tag.gospodarczy { border-color: var(--pin-gospodarczy); color: var(--pin-gospodarczy); }
+  .wydzial-tag.pracy { border-color: var(--pin-pracy); color: var(--pin-pracy); }
+
+  .gmaps-btn {
+    display: block;
+    margin-top: 12px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--accent2);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    padding: 8px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .gmaps-btn:hover { background: var(--border); }
+
+  .no-results {
+    padding: 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  /* Leaflet customization */
+  .leaflet-container { background: #111318; }
+  .leaflet-popup-content-wrapper {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    color: var(--text);
+  }
+  .leaflet-popup-tip { background: var(--surface2); }
+  .leaflet-popup-content { margin: 12px 14px; font-family: 'DM Mono', monospace; }
+  .popup-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--accent); margin-bottom: 4px; }
+  .popup-city { font-size: 0.72rem; color: var(--accent2); margin-bottom: 6px; }
+  .popup-vacancies { font-size: 0.72rem; }
+  .popup-btn { display: block; margin-top: 8px; font-size: 0.7rem; color: var(--accent2); cursor: pointer; text-decoration: underline; }
+
+  @media (max-width: 700px) {
+    .main-layout { flex-direction: column; height: auto; }
+    #map { height: 55vh; }
+    .sidebar { width: 100%; height: auto; max-height: 45vh; }
+    .info-panel { max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    Wolne Stanowiska Asesorskie 2026
+    <span>Zarządzenie Ministra Sprawiedliwości z dnia 24 lutego 2026 r. · Poz. 51</span>
+  </div>
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val" id="totalCourts">—</div><div class="stat-lbl">Sądów</div></div>
+    <div class="stat"><div class="stat-val" id="totalVacancies">—</div><div class="stat-lbl">Stanowisk</div></div>
+    <div class="stat"><div class="stat-val" id="totalApelacje">11</div><div class="stat-lbl">Apelacji</div></div>
+  </div>
+  <div id="geoStatus" style="display:none; font-size:0.68rem; color:var(--accent2); font-family:'DM Mono',monospace; padding:4px 12px; background:rgba(79,195,161,0.1); border-radius:4px; border:1px solid rgba(79,195,161,0.3);"></div>
+</header>
+
+<div class="main-layout">
+  <div id="map"></div>
+
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="section-label">📍 Znajdź najbliższe sądy</div>
+      <div class="search-row">
+        <input id="locationInput" type="text" placeholder="Wpisz miejscowość lub adres..." />
+        <button class="btn" onclick="searchLocation()">Szukaj</button>
+      </div>
+      <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="btn secondary" style="font-size:0.68rem; padding:5px 10px;" onclick="useMyLocation()">📡 Moja lokalizacja</button>
+        <button class="btn secondary" style="font-size:0.68rem; padding:5px 10px;" onclick="clearSearch()">✕ Wyczyść</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Filtr — Okręg apelacyjny</div>
+      <div class="apelacja-filter" id="apelacjaFilter"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Typ wydziału</div>
+      <div class="legend">
+        <div class="legend-item active" onclick="toggleType('cywilny', this)"><div class="legend-dot" style="background:var(--pin-cywilny)"></div>Cywilny</div>
+        <div class="legend-item active" onclick="toggleType('karny', this)"><div class="legend-dot" style="background:var(--pin-karny)"></div>Karny</div>
+        <div class="legend-item active" onclick="toggleType('rodzinny', this)"><div class="legend-dot" style="background:var(--pin-rodzinny)"></div>Rodzinny</div>
+        <div class="legend-item active" onclick="toggleType('gospodarczy', this)"><div class="legend-dot" style="background:var(--pin-gospodarczy)"></div>Gospodarczy</div>
+        <div class="legend-item active" onclick="toggleType('pracy', this)"><div class="legend-dot" style="background:var(--pin-pracy)"></div>Pracy</div>
+      </div>
+    </div>
+
+    <div class="results-area" id="resultsArea">
+      <div class="no-results">Wpisz miejscowość powyżej aby zobaczyć ranking odległości sądów.</div>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+      <button class="info-close" onclick="closeInfo()">✕</button>
+      <div id="infoPanelContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Global function stubs — filled after DOM ready
+function showCourtInfo(idx) { window._showCourtInfo && window._showCourtInfo(idx); }
+function closeInfo() { window._closeInfo && window._closeInfo(); }
+function searchLocation() { window._searchLocation && window._searchLocation(); }
+function useMyLocation() { window._useMyLocation && window._useMyLocation(); }
+function clearSearch() { window._clearSearch && window._clearSearch(); }
+function toggleType(t, el) { window._toggleType && window._toggleType(t, el); }
+function fixCoords(idx) { window._fixCoords && window._fixCoords(idx); }
+
+document.addEventListener('DOMContentLoaded', function() {
+// ============================================================
+// DATA — addresses from czerniakowska100.pl (official court register)
+// ============================================================
+const courts = [
+  // Białystok apelacja
+  { name: "Sąd Rejonowy w Białymstoku", city: "Białystok", addr: "ul. Mickiewicza 103", apelacja: "Białystok", lat: 53.12870, lng: 23.14910, vacancies: 1, wydzialy: ["IV Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Bielsku Podlaskim", city: "Bielsk Podlaski", addr: "ul. 3 Maja 7", apelacja: "Białystok", lat: 52.76780, lng: 23.19380, vacancies: 2, wydzialy: ["I Wydział Cywilny", "VII Zamiejscowy Wydział Karny z siedzibą w Hajnówce"] },
+  { name: "Sąd Rejonowy w Łomży", city: "Łomża", addr: "ul. Polowa 1", apelacja: "Białystok", lat: 53.17588, lng: 22.07016, vacancies: 2, wydzialy: ["VII Zamiejscowy Wydział Karny z siedzibą w Kolnie", "V Wydział Gospodarczy"] },
+  { name: "Sąd Rejonowy w Wysokiem Mazowieckiem", city: "Wysokie Mazowieckie", addr: "ul. Ludowa 44", apelacja: "Białystok", lat: 52.91860, lng: 22.51420, vacancies: 1, wydzialy: ["I Wydział Cywilny (0.8 etatu)", "III Wydział Rodzinny i Nieletnich (0.2 etatu)"] },
+  { name: "Sąd Rejonowy w Zambrowie", city: "Zambrów", addr: "al. Wojska Polskiego 56", apelacja: "Białystok", lat: 52.98388, lng: 22.24489, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Bartoszycach", city: "Bartoszyce", addr: "ul. Warszawska 3", apelacja: "Białystok", lat: 54.24884, lng: 20.80701, vacancies: 2, wydzialy: ["I Wydział Cywilny", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Giżycku", city: "Giżycko", addr: "ul. Warszawska 28", apelacja: "Białystok", lat: 54.03690, lng: 21.76660, vacancies: 2, wydzialy: ["I Wydział Cywilny", "II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Olsztynie", city: "Olsztyn", addr: "ul. Dąbrowszczaków 44", apelacja: "Białystok", lat: 53.78500, lng: 20.47380, vacancies: 1, wydzialy: ["X Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Ostrołęce", city: "Ostrołęka", addr: "ul. Mazowiecka 3", apelacja: "Białystok", lat: 53.08580, lng: 21.57100, vacancies: 3, wydzialy: ["I Wydział Cywilny (2)", "II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Suwałkach", city: "Suwałki", addr: "ul. Waryńskiego 45", apelacja: "Białystok", lat: 54.10230, lng: 22.93070, vacancies: 1, wydzialy: ["III Wydział Rodzinny i Nieletnich"] },
+  // Gdańsk apelacja
+  { name: "Sąd Rejonowy w Bydgoszczy", city: "Bydgoszcz", addr: "ul. Wały Jagiellońskie 4", apelacja: "Gdańsk", lat: 53.12518, lng: 18.00288, vacancies: 2, wydzialy: ["V Wydział Rodzinny i Nieletnich", "VI Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Inowrocławiu", city: "Inowrocław", addr: "ul. Narutowicza 42", apelacja: "Gdańsk", lat: 52.79833, lng: 18.25627, vacancies: 3, wydzialy: ["I Wydział Cywilny (2)", "II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Mogilnie", city: "Mogilno", addr: "ul. Sądowa 21", apelacja: "Gdańsk", lat: 52.65823, lng: 17.96156, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Żninie", city: "Żnin", addr: "pl. Wolności 17", apelacja: "Gdańsk", lat: 52.84860, lng: 17.72750, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Działdowie", city: "Działdowo", addr: "ul. Jagiełły 31", apelacja: "Gdańsk", lat: 53.22893, lng: 20.18233, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy w Elblągu", city: "Elbląg", addr: "ul. Płk. Dąbka 8-12", apelacja: "Gdańsk", lat: 54.15680, lng: 19.40870, vacancies: 2, wydzialy: ["VIII Wydział Karny", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy Gdańsk-Południe w Gdańsku", city: "Gdańsk", addr: "ul. Nowe Ogrody 30/34", apelacja: "Gdańsk", lat: 54.35330, lng: 18.64980, vacancies: 2, wydzialy: ["XII Wydział Cywilny", "X Wydział Karny"] },
+  { name: "Sąd Rejonowy Gdańsk-Północ w Gdańsku", city: "Gdańsk", addr: "ul. Piekarnicza 10", apelacja: "Gdańsk", lat: 54.38180, lng: 18.59810, vacancies: 1, wydzialy: ["VI Wydział Gospodarczy"] },
+  { name: "Sąd Rejonowy w Kartuzach", city: "Kartuzy", addr: "ul. Kościuszki 26", apelacja: "Gdańsk", lat: 54.33260, lng: 18.20310, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Kwidzynie", city: "Kwidzyn", addr: "pl. Plebiscytowy 1", apelacja: "Gdańsk", lat: 53.73480, lng: 18.93870, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Malborku", city: "Malbork", addr: "ul. Poczty Gdańskiej 19", apelacja: "Gdańsk", lat: 54.03290, lng: 19.02720, vacancies: 2, wydzialy: ["I Wydział Cywilny", "IV Wydział Pracy"] },
+  { name: "Sąd Rejonowy w Starogardzie Gdańskim", city: "Starogard Gdański", addr: "ul. Kościuszki 30", apelacja: "Gdańsk", lat: 53.96190, lng: 18.53280, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Wejherowie", city: "Wejherowo", addr: "ul. Sobieskiego 302", apelacja: "Gdańsk", lat: 54.60760, lng: 18.23340, vacancies: 2, wydzialy: ["III Wydział Rodzinny i Nieletnich (2)"] },
+  { name: "Sąd Rejonowy w Bytowie", city: "Bytów", addr: "ul. Zamkowa 1", apelacja: "Gdańsk", lat: 54.17310, lng: 17.49490, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy w Miastku", city: "Miastko", addr: "ul. Armii Krajowej 30", apelacja: "Gdańsk", lat: 54.00270, lng: 16.97830, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Słupsku", city: "Słupsk", addr: "ul. Szarych Szeregów 13", apelacja: "Gdańsk", lat: 54.46360, lng: 17.02950, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Brodnicy", city: "Brodnica", addr: "ul. Sądowa 5", apelacja: "Gdańsk", lat: 53.25950, lng: 19.39760, vacancies: 3, wydzialy: ["I Wydział Cywilny", "II Wydział Karny", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Grudziądzu", city: "Grudziądz", addr: "ul. gen. Sikorskiego 19/23", apelacja: "Gdańsk", lat: 53.48442, lng: 18.75382, vacancies: 3, wydzialy: ["I Wydział Cywilny (3)"] },
+  { name: "Sąd Rejonowy w Toruniu", city: "Toruń", addr: "ul. Fosa Staromiejska 12/14", apelacja: "Gdańsk", lat: 53.00630, lng: 18.60640, vacancies: 2, wydzialy: ["X Wydział Cywilny", "V Wydział Gospodarczy"] },
+  { name: "Sąd Rejonowy w Rypinie", city: "Rypin", addr: "ul. Warszawska 42", apelacja: "Gdańsk", lat: 53.06570, lng: 19.93880, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy we Włocławku", city: "Włocławek", addr: "ul. Kilińskiego 20", apelacja: "Gdańsk", lat: 52.65220, lng: 19.06560, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  // Katowice apelacja
+  { name: "Sąd Rejonowy w Bielsku-Białej", city: "Bielsko-Biała", addr: "ul. Mickiewicza 22", apelacja: "Katowice", lat: 49.82347, lng: 19.04444, vacancies: 1, wydzialy: ["IV Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Częstochowie", city: "Częstochowa", addr: "ul. Dąbrowskiego 23/35", apelacja: "Katowice", lat: 50.81160, lng: 19.11540, vacancies: 6, wydzialy: ["II Wydział Cywilny (2)", "IV Wydział Karny", "XI Wydział Karny", "V Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Gliwicach", city: "Gliwice", addr: "ul. Powstańców Warszawy 23", apelacja: "Katowice", lat: 50.29300, lng: 18.67120, vacancies: 2, wydzialy: ["IV Wydział Rodzinny i Nieletnich", "XII Wydział Gospodarczy"] },
+  { name: "Sąd Rejonowy w Tarnowskich Górach", city: "Tarnowskie Góry", addr: "ul. Opolska 17", apelacja: "Katowice", lat: 50.44710, lng: 18.86320, vacancies: 4, wydzialy: ["I Wydział Cywilny", "VI Wydział Cywilny", "II Wydział Karny (2)"] },
+  { name: "Sąd Rejonowy w Chorzowie", city: "Chorzów", addr: "ul. dr Józefa Rostka 2", apelacja: "Katowice", lat: 50.29640, lng: 18.95620, vacancies: 1, wydzialy: ["VIII Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Dąbrowie Górniczej", city: "Dąbrowa Górnicza", addr: "ul. Graniczna 23", apelacja: "Katowice", lat: 50.32540, lng: 19.18750, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Jaworznie", city: "Jaworzno", addr: "ul. Grunwaldzka 28", apelacja: "Katowice", lat: 50.20320, lng: 19.27360, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Sosnowcu", city: "Sosnowiec", addr: "ul. 1 Maja 19", apelacja: "Katowice", lat: 50.27860, lng: 19.10460, vacancies: 3, wydzialy: ["IV Wydział Rodzinny i Nieletnich (3)"] },
+  { name: "Sąd Rejonowy w Zawierciu", city: "Zawiercie", addr: "ul. Leśna 4", apelacja: "Katowice", lat: 50.48720, lng: 19.42130, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  // Kraków apelacja
+  { name: "Sąd Rejonowy w Kielcach", city: "Kielce", addr: "ul. Warszawska 44", apelacja: "Kraków", lat: 50.87060, lng: 20.63520, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy w Końskich", city: "Końskie", addr: "ul. Odrowąża 5", apelacja: "Kraków", lat: 51.18870, lng: 20.41420, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Chrzanowie", city: "Chrzanów", addr: "al. Henryka 23", apelacja: "Kraków", lat: 50.13650, lng: 19.39940, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Nowym Sączu", city: "Nowy Sącz", addr: "ul. Pijarska 3", apelacja: "Kraków", lat: 49.62470, lng: 20.70270, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Bochni", city: "Bochnia", addr: "ul. Kościuszki 4", apelacja: "Kraków", lat: 49.97050, lng: 20.43050, vacancies: 1, wydzialy: ["III Wydział Rodzinny i Nieletnich"] },
+  // Lublin apelacja
+  { name: "Sąd Rejonowy w Białej Podlaskiej", city: "Biała Podlaska", addr: "ul. Brzeska 20-22", apelacja: "Lublin", lat: 52.03270, lng: 23.11820, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Chełmie", city: "Chełm", addr: "al. I Armii Wojska Polskiego 16", apelacja: "Lublin", lat: 51.14280, lng: 23.47050, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy Lublin-Wschód w Lublinie z siedzibą w Świdniku", city: "Świdnik", addr: "ul. Wyszyńskiego 18", apelacja: "Lublin", lat: 51.22300, lng: 22.69380, vacancies: 1, wydzialy: ["IV Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy Lublin-Zachód w Lublinie", city: "Lublin", addr: "ul. Krakowskie Przedmieście 76", apelacja: "Lublin", lat: 51.24890, lng: 22.56390, vacancies: 2, wydzialy: ["I Wydział Cywilny", "VIII Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Puławach", city: "Puławy", addr: "ul. Lubelska 7", apelacja: "Lublin", lat: 51.41620, lng: 21.96500, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Radzyniu Podlaskim", city: "Radzyń Podlaski", addr: "ul. Jana Pawła II 2", apelacja: "Lublin", lat: 51.78470, lng: 22.62540, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Grójcu", city: "Grójec", addr: "ul. Sportowa 14", apelacja: "Lublin", lat: 51.86120, lng: 20.86850, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Radomiu", city: "Radom", addr: "ul. Struga 63", apelacja: "Lublin", lat: 51.40280, lng: 21.14820, vacancies: 3, wydzialy: ["VII Wydział Cywilny (2)", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Szydłowcu", city: "Szydłowiec", addr: "pl. Marii Konopnickiej 7", apelacja: "Lublin", lat: 51.22610, lng: 20.85760, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Garwolinie", city: "Garwolin", addr: "al. Legionów 46", apelacja: "Lublin", lat: 51.90860, lng: 21.61540, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Mińsku Mazowieckim", city: "Mińsk Mazowiecki", addr: "ul. Okrzei 14", apelacja: "Lublin", lat: 52.17990, lng: 21.56610, vacancies: 2, wydzialy: ["I Wydział Cywilny", "II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Siedlcach", city: "Siedlce", addr: "ul. Świrskiego 17", apelacja: "Lublin", lat: 52.17210, lng: 22.27490, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy w Janowie Lubelskim", city: "Janów Lubelski", addr: "ul. Zamoyskiego 94", apelacja: "Lublin", lat: 50.71020, lng: 22.41850, vacancies: 1, wydzialy: ["III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Zamościu", city: "Zamość", addr: "ul. Akademicka 1", apelacja: "Lublin", lat: 50.72350, lng: 23.25160, vacancies: 1, wydzialy: ["III Wydział Rodzinny i Nieletnich"] },
+  // Łódź apelacja
+  { name: "Sąd Rejonowy w Ostrowie Wielkopolskim", city: "Ostrów Wlkp.", addr: "ul. Sądowa 2", apelacja: "Łódź", lat: 51.64860, lng: 17.81850, vacancies: 3, wydzialy: ["I Wydział Cywilny (3)"] },
+  { name: "Sąd Rejonowy w Łęczycy", city: "Łęczyca", addr: "ul. M. Konopnickiej 16", apelacja: "Łódź", lat: 52.05960, lng: 19.19480, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy dla Łodzi-Śródmieścia w Łodzi", city: "Łódź", addr: "al. Kościuszki 107/109", apelacja: "Łódź", lat: 51.75860, lng: 19.46580, vacancies: 1, wydzialy: ["VIII Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy dla Łodzi-Widzewa w Łodzi", city: "Łódź", addr: "al. Piłsudskiego 143", apelacja: "Łódź", lat: 51.76628, lng: 19.51273, vacancies: 1, wydzialy: ["V Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Pabianicach", city: "Pabianice", addr: "ul. Partyzancka 105/127", apelacja: "Łódź", lat: 51.66290, lng: 19.35080, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Skierniewicach", city: "Skierniewice", addr: "ul. Reymonta 12/14", apelacja: "Łódź", lat: 51.95900, lng: 20.15060, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Zgierzu", city: "Zgierz", addr: "ul. Długa 43a", apelacja: "Łódź", lat: 51.85540, lng: 19.40680, vacancies: 2, wydzialy: ["II Wydział Karny (2)"] },
+  { name: "Sąd Rejonowy w Piotrkowie Trybunalskim", city: "Piotrków Trybunalski", addr: "ul. Słowackiego 5", apelacja: "Łódź", lat: 51.40490, lng: 19.69820, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Tomaszowie Mazowieckim", city: "Tomaszów Mazowiecki", addr: "ul. Prezydenta I. Mościckiego 9", apelacja: "Łódź", lat: 51.53470, lng: 20.01450, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Płocku", city: "Płock", addr: "pl. Narutowicza 6", apelacja: "Łódź", lat: 52.54580, lng: 19.70730, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Płońsku", city: "Płońsk", addr: "ul. Henryka Sienkiewicza 9a", apelacja: "Łódź", lat: 52.62741, lng: 20.37634, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Sierpcu", city: "Sierpc", addr: "ul. Wiosny Ludów 1", apelacja: "Łódź", lat: 52.86170, lng: 19.66280, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Żyrardowie", city: "Żyrardów", addr: "al. Partyzantów 3", apelacja: "Łódź", lat: 52.05310, lng: 20.44450, vacancies: 2, wydzialy: ["III Wydział Rodzinny i Nieletnich (2)"] },
+  { name: "Sąd Rejonowy w Sieradzu", city: "Sieradz", addr: "al. Zwycięstwa 1", apelacja: "Łódź", lat: 51.59560, lng: 18.72760, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy w Zduńskiej Woli", city: "Zduńska Wola", addr: "ul. Żeromskiego 19", apelacja: "Łódź", lat: 51.59800, lng: 18.93680, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  // Poznań apelacja
+  { name: "Sąd Rejonowy w Słupcy", city: "Słupca", addr: "ul. Armii Krajowej 2", apelacja: "Poznań", lat: 52.28360, lng: 17.87610, vacancies: 1, wydzialy: ["I Wydział Cywilny (0.5 etatu)", "III Wydział Rodzinny i Nieletnich (0.5 etatu)"] },
+  { name: "Sąd Rejonowy w Turku", city: "Turek", addr: "ul. Legionów Polskich 4", apelacja: "Poznań", lat: 51.99960, lng: 18.49480, vacancies: 2, wydzialy: ["I Wydział Cywilny", "II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Gostyniu", city: "Gostyń", addr: "ul. Sądowa 1", apelacja: "Poznań", lat: 51.88120, lng: 17.01550, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Grodzisku Wielkopolskim", city: "Grodzisk Wlkp.", addr: "ul. Żwirki i Wigury 3", apelacja: "Poznań", lat: 52.23150, lng: 16.36590, vacancies: 1, wydzialy: ["III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Kościanie", city: "Kościan", addr: "pl. Niezłomnych 2", apelacja: "Poznań", lat: 51.98660, lng: 16.64580, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Lesznie", city: "Leszno", addr: "ul. Dąbrowskiego 2", apelacja: "Poznań", lat: 51.84170, lng: 16.57360, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Nowym Tomyślu", city: "Nowy Tomyśl", addr: "pl. Niepodległości 31", apelacja: "Poznań", lat: 52.31760, lng: 16.12660, vacancies: 2, wydzialy: ["I Wydział Cywilny", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Obornikach", city: "Oborniki", addr: "ul. Piłsudskiego 47", apelacja: "Poznań", lat: 52.65430, lng: 16.82890, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy Poznań-Nowe Miasto i Wilda w Poznaniu", city: "Poznań", addr: "ul. Młyńska 1a", apelacja: "Poznań", lat: 52.40720, lng: 16.92840, vacancies: 1, wydzialy: ["IV Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Trzciance", city: "Trzcianka", addr: "ul. Staszica 1", apelacja: "Poznań", lat: 53.04340, lng: 16.46450, vacancies: 3, wydzialy: ["I Wydział Cywilny", "II Wydział Karny", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Zielonej Górze", city: "Zielona Góra", addr: "pl. Słowiański 2", apelacja: "Poznań", lat: 51.93560, lng: 15.50690, vacancies: 1, wydzialy: ["V Wydział Gospodarczy"] },
+  // Rzeszów apelacja
+  { name: "Sąd Rejonowy w Lubaczowie", city: "Lubaczów", addr: "ul. Mickiewicza 21", apelacja: "Rzeszów", lat: 50.15820, lng: 23.12270, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Stalowej Woli", city: "Stalowa Wola", addr: "ul. Rozwadowska 12", apelacja: "Rzeszów", lat: 50.57760, lng: 22.04710, vacancies: 2, wydzialy: ["II Wydział Karny (2)"] },
+  { name: "Sąd Rejonowy w Tarnobrzegu", city: "Tarnobrzeg", addr: "ul. Sienkiewicza 27", apelacja: "Rzeszów", lat: 50.57470, lng: 21.67890, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  // Szczecin apelacja
+  { name: "Sąd Rejonowy w Gorzowie Wielkopolskim", city: "Gorzów Wlkp.", addr: "ul. Chopina 52", apelacja: "Szczecin", lat: 52.73620, lng: 15.24140, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Sulęcinie", city: "Sulęcin", addr: "ul. Kościuszki 30", apelacja: "Szczecin", lat: 52.44350, lng: 15.10840, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Sławnie", city: "Sławno", addr: "ul. I Pułku Ułanów 20", apelacja: "Szczecin", lat: 54.35910, lng: 16.67940, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Kamieniu Pomorskim", city: "Kamień Pomorski", addr: "ul. Sądowa 1", apelacja: "Szczecin", lat: 53.96720, lng: 14.77740, vacancies: 1, wydzialy: ["II Wydział Karny (0.5 etatu)", "III Wydział Rodzinny i Nieletnich (0.5 etatu)"] },
+  { name: "Sąd Rejonowy w Łobzie", city: "Łobez", addr: "ul. Niepodległości 15", apelacja: "Szczecin", lat: 53.63910, lng: 15.61530, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Myśliborzu", city: "Myślibórz", addr: "ul. Niedziałkowskiego 6", apelacja: "Szczecin", lat: 52.92480, lng: 14.87270, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Stargardzie", city: "Stargard", addr: "ul. Wojska Polskiego 17-19", apelacja: "Szczecin", lat: 53.33580, lng: 15.04380, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy Szczecin-Centrum w Szczecinie", city: "Szczecin", addr: "ul. Kaszubska 42", apelacja: "Szczecin", lat: 53.43150, lng: 14.55210, vacancies: 2, wydzialy: ["III Wydział Cywilny", "XII Wydział Gospodarczy"] },
+  { name: "Sąd Rejonowy Szczecin-Prawobrzeże i Zachód w Szczecinie", city: "Szczecin", addr: "pl. Żołnierza Polskiego 16", apelacja: "Szczecin", lat: 53.43340, lng: 14.54980, vacancies: 1, wydzialy: ["V Wydział Karny"] },
+  // Warszawa apelacja
+  { name: "Sąd Rejonowy w Grodzisku Mazowieckim", city: "Grodzisk Mazowiecki", addr: "ul. Bartniaka 21/23", apelacja: "Warszawa", lat: 52.10721, lng: 20.62984, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy w Piasecznie", city: "Piaseczno", addr: "ul. Kościuszki 14", apelacja: "Warszawa", lat: 52.07980, lng: 21.02010, vacancies: 3, wydzialy: ["I Wydział Cywilny (2)", "II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Pruszkowie", city: "Pruszków", addr: "ul. Kraszewskiego 22", apelacja: "Warszawa", lat: 52.16700, lng: 20.80050, vacancies: 2, wydzialy: ["II Wydział Karny (2)"] },
+  { name: "Sąd Rejonowy dla m.st. Warszawy w Warszawie", city: "Warszawa", addr: "ul. Marszałkowska 82", apelacja: "Warszawa", lat: 52.22654, lng: 21.01226, vacancies: 2, wydzialy: ["I Wydział Cywilny", "IX Wydział Gospodarczy"] },
+  { name: "Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie", city: "Warszawa", addr: "ul. Ogrodowa 51A", apelacja: "Warszawa", lat: 52.23486, lng: 20.99447, vacancies: 4, wydzialy: ["XVI Wydział Cywilny (3)", "V Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy dla Warszawy-Śródmieścia w Warszawie", city: "Warszawa", addr: "ul. Marszałkowska 82", apelacja: "Warszawa", lat: 52.22654, lng: 21.01226, vacancies: 1, wydzialy: ["III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy dla Warszawy-Woli w Warszawie", city: "Warszawa", addr: "ul. Kocjana 3", apelacja: "Warszawa", lat: 52.23741, lng: 20.94619, vacancies: 7, wydzialy: ["I Wydział Cywilny (5)", "II Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy dla Warszawy-Żoliborza w Warszawie", city: "Warszawa", addr: "ul. Kocjana 3", apelacja: "Warszawa", lat: 52.23741, lng: 20.94619, vacancies: 1, wydzialy: ["VI Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Otwocku", city: "Otwock", addr: "ul. Armii Krajowej 2", apelacja: "Warszawa", lat: 52.10420, lng: 21.26180, vacancies: 3, wydzialy: ["I Wydział Cywilny", "II Wydział Karny (2)"] },
+  { name: "Sąd Rejonowy dla Warszawy Pragi-Południe w Warszawie", city: "Warszawa", addr: "ul. Terespolska 15a", apelacja: "Warszawa", lat: 52.24748, lng: 21.07773, vacancies: 4, wydzialy: ["I Wydział Cywilny", "II Wydział Cywilny", "V Wydział Rodzinny i Nieletnich", "VI Wydział Pracy i Ubezpieczeń Społecznych"] },
+  { name: "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie", city: "Warszawa", addr: "ul. Terespolska 15a", apelacja: "Warszawa", lat: 52.24748, lng: 21.07773, vacancies: 5, wydzialy: ["I Wydział Cywilny", "VII Wydział Cywilny (2)", "III Wydział Karny", "V Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Wołominie", city: "Wołomin", addr: "ul. Prądzyńskiego 3A", apelacja: "Warszawa", lat: 52.34476, lng: 21.24178, vacancies: 2, wydzialy: ["V Wydział Karny", "III Wydział Rodzinny i Nieletnich"] },
+  // Wrocław apelacja
+  { name: "Sąd Rejonowy w Lubaniu", city: "Lubań", addr: "pl. 3 Maja 12", apelacja: "Wrocław", lat: 51.11960, lng: 15.28470, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Lwówku Śląskim", city: "Lwówek Śląski", addr: "ul. Jaśkiewicza 12", apelacja: "Wrocław", lat: 51.10680, lng: 15.59100, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy w Zgorzelcu", city: "Zgorzelec", addr: "ul. Armii Krajowej 104", apelacja: "Wrocław", lat: 51.15420, lng: 15.00560, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Lubinie", city: "Lubin", addr: "ul. Wrocławska 3", apelacja: "Wrocław", lat: 51.40280, lng: 16.20140, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Złotoryi", city: "Złotoryja", addr: "ul. Kolejowa 3", apelacja: "Wrocław", lat: 51.12560, lng: 15.91870, vacancies: 1, wydzialy: ["II Wydział Karny (0.5 etatu)", "III Wydział Rodzinny i Nieletnich (0.5 etatu)"] },
+  { name: "Sąd Rejonowy w Głubczycach", city: "Głubczyce", addr: "ul. Kochanowskiego 1", apelacja: "Wrocław", lat: 50.20320, lng: 17.83190, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Kędzierzynie-Koźlu", city: "Kędzierzyn-Koźle", addr: "ul. Sądowa 6", apelacja: "Wrocław", lat: 50.34520, lng: 18.21910, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy w Świdnicy", city: "Świdnica", addr: "ul. Różana 2", apelacja: "Wrocław", lat: 50.84690, lng: 16.48810, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Wałbrzychu", city: "Wałbrzych", addr: "ul. Słowackiego 10", apelacja: "Wrocław", lat: 50.77420, lng: 16.28580, vacancies: 2, wydzialy: ["I Wydział Cywilny", "IV Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Oleśnicy", city: "Oleśnica", addr: "ul. 3 Maja 48/49", apelacja: "Wrocław", lat: 51.20950, lng: 17.38590, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Środzie Śląskiej", city: "Środa Śląska", addr: "ul. Św. Andrzeja 3", apelacja: "Wrocław", lat: 51.16630, lng: 16.59380, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy w Wołowie", city: "Wołów", addr: "ul. Mikołaja Reja 11", apelacja: "Wrocław", lat: 51.34250, lng: 16.63860, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy dla Wrocławia-Fabrycznej we Wrocławiu", city: "Wrocław", addr: "ul. Podwale 30", apelacja: "Wrocław", lat: 51.10920, lng: 17.02880, vacancies: 4, wydzialy: ["XI Wydział Cywilny (2)", "XIV Wydział Cywilny", "VIII Wydział Gospodarczy"] },
+];
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getCourtType(court) {
+  const all = court.wydzialy.join(' ').toLowerCase();
+  const types = [];
+  if (all.includes('cywilny')) types.push('cywilny');
+  if (all.includes('karny')) types.push('karny');
+  if (all.includes('rodzinny')) types.push('rodzinny');
+  if (all.includes('gospod')) types.push('gospodarczy');
+  if (all.includes('pracy') || all.includes('ubezpiecze')) types.push('pracy');
+  return types;
+}
+
+function getPinColor(court) {
+  const types = getCourtType(court);
+  if (types.length > 1) return '#e8c547';
+  if (types[0] === 'cywilny') return '#4fc3a1';
+  if (types[0] === 'karny') return '#e85b5b';
+  if (types[0] === 'rodzinny') return '#b06de8';
+  if (types[0] === 'gospodarczy') return '#e88f3a';
+  if (types[0] === 'pracy') return '#4a9fe8';
+  return '#e8c547';
+}
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+function getWydzialClass(w) {
+  w = w.toLowerCase();
+  if (w.includes('cywilny')) return 'cywilny';
+  if (w.includes('karny')) return 'karny';
+  if (w.includes('rodzinny')) return 'rodzinny';
+  if (w.includes('gospod')) return 'gospodarczy';
+  if (w.includes('pracy') || w.includes('ubezpiecze')) return 'pracy';
+  return '';
+}
+
+
+// ============================================================
+// GPS OVERRIDE — precise building coordinates verified from OSM/Google Maps
+// Replaces any wrong hardcoded values in the courts array above
+// ============================================================
+const GPS_OVERRIDES = {
+  "Sąd Rejonowy w Płońsku":                                        [52.62741, 20.37634],
+  "Sąd Rejonowy w Łomży":                                          [53.17588, 22.07016],
+  "Sąd Rejonowy w Zambrowie":                                       [52.98388, 22.24489],
+  "Sąd Rejonowy w Bartoszycach":                                    [54.24884, 20.80701],
+  "Sąd Rejonowy w Bydgoszczy":                                      [53.12518, 18.00288],
+  "Sąd Rejonowy w Inowrocławiu":                                    [52.79833, 18.25627],
+  "Sąd Rejonowy w Mogilnie":                                        [52.65823, 17.96156],
+  "Sąd Rejonowy w Działdowie":                                      [53.22893, 20.18233],
+  "Sąd Rejonowy Gdańsk-Południe w Gdańsku":                        [54.34889, 18.65430],
+  "Sąd Rejonowy w Grudziądzu":                                      [53.48442, 18.75382],
+  "Sąd Rejonowy w Toruniu":                                         [53.01196, 18.60518],
+  "Sąd Rejonowy w Bielsku-Białej":                                  [49.82347, 19.04444],
+  "Sąd Rejonowy w Częstochowie":                                    [50.81234, 19.11572],
+  "Sąd Rejonowy w Chorzowie":                                       [50.29698, 18.95488],
+  "Sąd Rejonowy w Dąbrowie Górniczej":                              [50.32382, 19.18808],
+  "Sąd Rejonowy w Łęczycy":                                        [52.06112, 19.19618],
+  "Sąd Rejonowy dla Łodzi-Widzewa w Łodzi":                        [51.76628, 19.51273],
+  "Sąd Rejonowy w Grodzisku Mazowieckim":                           [52.10721, 20.62984],
+  "Sąd Rejonowy dla m.st. Warszawy w Warszawie":                   [52.22654, 21.01226],
+  "Sąd Rejonowy dla Warszawy-Śródmieścia w Warszawie":             [52.22654, 21.01226],
+  "Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie":                [52.23486, 20.99447],
+  "Sąd Rejonowy dla Warszawy-Woli w Warszawie":                    [52.23741, 20.94619],
+  "Sąd Rejonowy dla Warszawy-Żoliborza w Warszawie":               [52.23741, 20.94619],
+  "Sąd Rejonowy dla Warszawy Pragi-Południe w Warszawie":          [52.24748, 21.07773],
+  "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie":            [52.24748, 21.07773],
+  "Sąd Rejonowy w Wołominie":                                       [52.34476, 21.24178],
+  "Sąd Rejonowy w Siedlcach":                                       [52.17252, 22.27631],
+  "Sąd Rejonowy w Łobzie":                                          [53.63864, 15.61699],
+  "Sąd Rejonowy w Lubinie":                                         [51.40087, 16.20126],
+  "Sąd Rejonowy w Wałbrzychu":                                      [50.77506, 16.28540],
+};
+
+function applyGpsOverrides() {
+  courts.forEach(c => {
+    if (GPS_OVERRIDES[c.name]) {
+      c.lat = GPS_OVERRIDES[c.name][0];
+      c.lng = GPS_OVERRIDES[c.name][1];
+    }
+  });
+}
+
+// ============================================================
+// OVERPASS — fetch all Polish courthouses from OSM in one query
+// Runs once in browser, caches results 30 days in localStorage
+// ============================================================
+const OV_CACHE_KEY = 'sadyOverpassCache_v1';
+const OV_CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
+
+function loadOvCache() {
+  try {
+    const raw = localStorage.getItem(OV_CACHE_KEY);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > OV_CACHE_TTL) { localStorage.removeItem(OV_CACHE_KEY); return null; }
+    return data;
+  } catch { return null; }
+}
+function saveOvCache(data) {
+  try { localStorage.setItem(OV_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+}
+
+// Build a lookup: "city|street|housenumber" -> {lat,lng}
+function parseOverpassToLookup(elements) {
+  const lookup = {};
+  for (const el of elements) {
+    const tags = el.tags || {};
+    const lat = el.lat ?? el.center?.lat;
+    const lng = el.lon ?? el.center?.lon;
+    if (!lat || !lng) continue;
+
+    // Key by name if it's a courthouse with a name
+    if (tags.name) {
+      const normName = tags.name.trim().toLowerCase();
+      lookup['name|' + normName] = { lat, lng };
+    }
+    // Key by addr:street + addr:housenumber + addr:city
+    if (tags['addr:street'] && tags['addr:city']) {
+      const street = tags['addr:street'].toLowerCase().trim();
+      const city = tags['addr:city'].toLowerCase().trim();
+      const hn = (tags['addr:housenumber'] || '').toLowerCase().trim();
+      lookup[`addr|${street}|${hn}|${city}`] = { lat, lng };
+      lookup[`addr|${street}||${city}`] = { lat, lng }; // without housenumber fallback
+    }
+  }
+  return lookup;
+}
+
+function matchCourtToOSM(court, lookup) {
+  // Try 1: exact name match
+  const normName = court.name.trim().toLowerCase();
+  if (lookup['name|' + normName]) return lookup['name|' + normName];
+
+  // Try 2: addr:street + housenumber + city
+  const addrRaw = court.addr.replace(/^(ul\.|al\.|pl\.|os\.)\s*/i, '').trim();
+  const hnMatch = addrRaw.match(/^(.+?)\s+([\d]+[A-Za-z]?)$/);
+  const street = (hnMatch ? hnMatch[1] : addrRaw).toLowerCase();
+  const hn = (hnMatch ? hnMatch[2] : '').toLowerCase();
+  const city = court.city.toLowerCase();
+
+  const k1 = `addr|${street}|${hn}|${city}`;
+  if (lookup[k1]) return lookup[k1];
+
+  // Try 3: street only + city
+  const k2 = `addr|${street}||${city}`;
+  if (lookup[k2]) return lookup[k2];
+
+  return null;
+}
+
+async function fetchAndApplyOverpass(statusEl) {
+  // Check cache
+  let lookup = loadOvCache();
+  if (!lookup) {
+    statusEl.style.display = 'block';
+    statusEl.textContent = '⏳ Pobieranie lokalizacji sądów z OpenStreetMap…';
+    try {
+      // Query: all courthouses in Poland bounding box
+      const query = `[out:json][timeout:90];(node["amenity"="courthouse"](49,14,55,24);way["amenity"="courthouse"](49,14,55,24);relation["amenity"="courthouse"](49,14,55,24););out center tags;`;
+      const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+      const r = await fetch(url);
+      const data = await r.json();
+      lookup = parseOverpassToLookup(data.elements || []);
+      saveOvCache(lookup);
+    } catch(e) {
+      statusEl.textContent = '⚠ Nie udało się pobrać z OSM — używam przybliżonych lokalizacji';
+      setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+      return;
+    }
+  }
+
+  // Apply OSM coords to courts — only if within 30km of hardcoded (sanity check)
+  let updated = 0;
+  courts.forEach(court => {
+    const osm = matchCourtToOSM(court, lookup);
+    if (!osm) return;
+    const distDeg = Math.sqrt((osm.lat - court.lat)**2 + (osm.lng - court.lng)**2);
+    if (distDeg < 0.3) { // ~30km sanity check
+      court.lat = osm.lat;
+      court.lng = osm.lng;
+      updated++;
+    }
+  });
+
+  if (updated > 0) {
+    renderMarkers();
+    statusEl.textContent = `✓ Lokalizacje zaktualizowane z OSM (${updated} sądów)`;
+  } else {
+    statusEl.textContent = '✓ Lokalizacje gotowe';
+  }
+  setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+}
+
+
+// ============================================================
+// MAP INIT
+// ============================================================
+const map = L.map('map', { zoomControl: true }).setView([52.1, 19.5], 6);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+let markers = [];
+let userMarker = null;
+let activeFilters = { types: new Set(['cywilny','karny','rodzinny','gospodarczy','pracy']), apelacja: null };
+let selectedCourt = null;
+
+function createPinIcon(color, size = 28) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size*1.4}' viewBox='0 0 28 38'>
+    <path d='M14 2C8.48 2 4 6.48 4 12c0 7.5 10 24 10 24s10-16.5 10-24c0-5.52-4.48-10-10-10z' fill='${color}' stroke='rgba(0,0,0,0.4)' stroke-width='1.5'/>
+    <circle cx='14' cy='12' r='5' fill='rgba(0,0,0,0.35)'/>
+  </svg>`;
+  return L.divIcon({
+    html: svg,
+    iconSize: [size, size*1.4],
+    iconAnchor: [size/2, size*1.4],
+    popupAnchor: [0, -size*1.2],
+    className: ''
+  });
+}
+
+function renderMarkers() {
+  markers.forEach(m => map.removeLayer(m.marker));
+  markers = [];
+
+  courts.forEach((court, idx) => {
+    const types = getCourtType(court);
+    const typeMatch = types.some(t => activeFilters.types.has(t));
+    const apelMatch = !activeFilters.apelacja || court.apelacja === activeFilters.apelacja;
+    if (!typeMatch || !apelMatch) return;
+
+    const color = getPinColor(court);
+    const marker = L.marker([court.lat, court.lng], { icon: createPinIcon(color) }).addTo(map);
+
+    marker.bindPopup(`
+      <div class="popup-name">${court.name}</div>
+      <div class="popup-city">📍 ${court.addr}, ${court.city}</div>
+      <div class="popup-city" style="color:#7a8099;">SA w ${court.apelacja}</div>
+      <div class="popup-vacancies">Wolne stanowiska: <strong style="color:#e8c547">${court.vacancies}</strong></div>
+      <div style="font-size:0.68rem; color:#7a8099; margin-top:4px;">${court.wydzialy.join(', ')}</div>
+      <span class="popup-btn" onclick="showCourtInfo(${idx})">Szczegóły →</span>
+    `);
+
+    marker.on('click', () => { selectedCourt = idx; });
+    markers.push({ marker, court, idx });
+  });
+}
+
+// ============================================================
+// COURT INFO PANEL
+// ============================================================
+window._showCourtInfo = function showCourtInfo(idx) {
+  const court = courts[idx];
+  const panel = document.getElementById('infoPanel');
+  const content = document.getElementById('infoPanelContent');
+
+  const gmapsQ = encodeURIComponent(court.addr + ', ' + court.city + ', Polska');
+  const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${gmapsQ}`;
+  const directUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(court.addr + ', ' + court.city)}`;
+
+  let wydzialTags = court.wydzialy.map(w =>
+    `<span class="wydzial-tag ${getWydzialClass(w)}">${w}</span>`
+  ).join('');
+
+  content.innerHTML = `
+    <button class="info-close" onclick="closeInfo()">✕</button>
+    <div class="info-name">${court.name}</div>
+    <div class="info-city">📍 ${court.addr}, ${court.city}</div>
+    <div class="info-row"><span class="info-row-key">Okręg apelacyjny</span><span class="info-row-val">SA w ${court.apelacja}</span></div>
+    <div class="info-row"><span class="info-row-key">Wolne stanowiska</span><span class="info-row-val" style="color:#e8c547;font-weight:700;">${court.vacancies}</span></div>
+    <div class="info-row"><span class="info-row-key">Współrzędne GPS</span><span class="info-row-val">${court.lat.toFixed(5)}, ${court.lng.toFixed(5)}</span></div>
+    <div class="wydzial-list"><div style="font-size:0.65rem; color:#7a8099; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:5px;">Wydziały</div>${wydzialTags}</div>
+    <a class="gmaps-btn" href="${gmapsUrl}" target="_blank">🗺 Pokaż w Google Maps</a>
+    <a class="gmaps-btn" href="${directUrl}" target="_blank">🚗 Wskazówki dojazdu (Google Maps)</a>
+    <div style="margin-top:8px; font-size:0.65rem; color:var(--muted);">
+      GPS na mapie: ${court.lat.toFixed(5)}, ${court.lng.toFixed(5)}
+      <span style="color:var(--accent2); cursor:pointer; text-decoration:underline; margin-left:8px;"
+        onclick="fixCoords(${idx})">✏ Popraw pin</span>
+    </div>
+  `;
+
+  panel.classList.add('visible');
+  map.setView([court.lat, court.lng], 13);
+  // open marker popup
+  const found = markers.find(m => m.idx === idx);
+  if (found) found.marker.openPopup();
+}
+
+window._closeInfo = function closeInfo() {
+  document.getElementById('infoPanel').classList.remove('visible');
+}
+
+window._fixCoords = function fixCoords(idx) {
+  const court = courts[idx];
+  const input = prompt(
+    `Podaj prawidłowe współrzędne GPS dla:\n${court.name}\n${court.addr}, ${court.city}\n\nSkopiuj z Google Maps (klik prawym na mapie → pierwsze pole).\nFormat: 52.62580, 20.37250`,
+    `${court.lat.toFixed(5)}, ${court.lng.toFixed(5)}`
+  );
+  if (!input) return;
+  const parts = input.split(',').map(s => parseFloat(s.trim()));
+  if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) { alert('Nieprawidłowy format.'); return; }
+  const [lat, lng] = parts;
+  court.lat = lat; court.lng = lng;
+  // Save to cache
+  const cache = loadGeoCache();
+  cache[court.addr + '|' + court.city] = { lat, lng };
+  saveGeoCache(cache);
+  // Update marker
+  const found = markers.find(m => m.idx === idx);
+  if (found) found.marker.setLatLng([lat, lng]);
+  // Refresh info panel
+  window._showCourtInfo(idx);
+  alert(`✓ Pin przeniesiony do ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+};
+
+// ============================================================
+// APELACJA FILTER BUTTONS
+// ============================================================
+const apelacje = [...new Set(courts.map(c => c.apelacja))].sort();
+const filterContainer = document.getElementById('apelacjaFilter');
+const allBtn = document.createElement('button');
+allBtn.className = 'apelacja-btn active';
+allBtn.textContent = 'Wszystkie';
+allBtn.onclick = () => {
+  activeFilters.apelacja = null;
+  document.querySelectorAll('.apelacja-btn').forEach(b => b.classList.remove('active'));
+  allBtn.classList.add('active');
+  renderMarkers();
+  if (userMarker) updateRanking(userMarker.getLatLng().lat, userMarker.getLatLng().lng);
+};
+filterContainer.appendChild(allBtn);
+
+apelacje.forEach(ap => {
+  const btn = document.createElement('button');
+  btn.className = 'apelacja-btn';
+  btn.textContent = ap;
+  btn.onclick = () => {
+    activeFilters.apelacja = ap;
+    document.querySelectorAll('.apelacja-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderMarkers();
+    if (userMarker) updateRanking(userMarker.getLatLng().lat, userMarker.getLatLng().lng);
+  };
+  filterContainer.appendChild(btn);
+});
+
+// ============================================================
+// TYPE FILTER
+// ============================================================
+window._toggleType = function toggleType(type, el) {
+  if (activeFilters.types.has(type)) {
+    if (activeFilters.types.size === 1) return;
+    activeFilters.types.delete(type);
+    el.classList.remove('active');
+  } else {
+    activeFilters.types.add(type);
+    el.classList.add('active');
+  }
+  renderMarkers();
+}
+
+// ============================================================
+// LOCATION SEARCH + RANKING
+// ============================================================
+let userLat = null, userLng = null;
+
+function updateRanking(lat, lng) {
+  userLat = lat; userLng = lng;
+  const filtered = courts.filter(c => {
+    const types = getCourtType(c);
+    return types.some(t => activeFilters.types.has(t)) &&
+      (!activeFilters.apelacja || c.apelacja === activeFilters.apelacja);
+  });
+
+  const ranked = filtered.map(c => ({
+    ...c,
+    dist: haversine(lat, lng, c.lat, c.lng),
+    idx: courts.indexOf(c)
+  })).sort((a, b) => a.dist - b.dist);
+
+  const area = document.getElementById('resultsArea');
+  if (ranked.length === 0) {
+    area.innerHTML = '<div class="no-results">Brak wyników dla aktywnych filtrów.</div>';
+    return;
+  }
+
+  area.innerHTML = ranked.map((c, i) => `
+    <div class="result-item" onclick="showCourtInfo(${c.idx})" id="result-${c.idx}">
+      <div class="rank-badge">#${i+1}</div>
+      <div class="result-body">
+        <div class="result-name">${c.name}</div>
+        <div class="result-meta">
+          <span class="result-dist">📍 ${c.dist < 1 ? '<1' : Math.round(c.dist)} km</span>
+          <span class="result-vacancies">★ ${c.vacancies} ${c.vacancies === 1 ? 'stanowisko' : 'stanowisk'}</span>
+          <span class="result-apel">SA ${c.apelacja}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window._searchLocation = async function searchLocation() {
+  const query = document.getElementById('locationInput').value.trim();
+  if (!query) return;
+
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ', Polska')}&format=json&limit=1&accept-language=pl`;
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': 'SadyAsesorskaApp/1.0' } });
+    const data = await res.json();
+    if (!data.length) {
+      alert('Nie znaleziono lokalizacji: ' + query);
+      return;
+    }
+    const { lat, lon, display_name } = data[0];
+    setUserLocation(parseFloat(lat), parseFloat(lon), display_name);
+  } catch(e) {
+    alert('Błąd geolokalizacji. Sprawdź połączenie internetowe.');
+  }
+}
+
+function setUserLocation(lat, lng, label) {
+  if (userMarker) map.removeLayer(userMarker);
+  userMarker = L.marker([lat, lng], {
+    icon: L.divIcon({
+      html: `<div style="width:18px;height:18px;background:#e8c547;border:3px solid #0d0f14;border-radius:50%;box-shadow:0 0 10px #e8c547aa;"></div>`,
+      iconSize: [18,18], iconAnchor: [9,9], className: ''
+    })
+  }).addTo(map).bindPopup(`<b>Twoja lokalizacja</b><br><small>${label || ''}</small>`).openPopup();
+
+  map.setView([lat, lng], 9);
+  updateRanking(lat, lng);
+}
+
+window._useMyLocation = function useMyLocation() {
+  if (!navigator.geolocation) { alert('Geolokalizacja niedostępna.'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => setUserLocation(pos.coords.latitude, pos.coords.longitude, 'Twoja lokalizacja GPS'),
+    () => alert('Nie udało się pobrać lokalizacji.')
+  );
+}
+
+window._clearSearch = function clearSearch() {
+  if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+  document.getElementById('locationInput').value = '';
+  document.getElementById('resultsArea').innerHTML = '<div class="no-results">Wpisz miejscowość powyżej aby zobaczyć ranking odległości sądów.</div>';
+  closeInfo();
+}
+
+document.getElementById('locationInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchLocation();
+});
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('totalCourts').textContent = courts.length;
+document.getElementById('totalVacancies').textContent = courts.reduce((s, c) => s + c.vacancies, 0);
+applyGpsOverrides(); // apply known-good manual overrides first
+renderMarkers();     // show map immediately with what we have
+const statusEl = document.getElementById('geoStatus');
+fetchAndApplyOverpass(statusEl); // then fetch precise OSM coords async
+}); // end DOMContentLoaded
+</script>
+</body>
+</html>
