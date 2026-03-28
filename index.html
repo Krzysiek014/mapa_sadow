@@ -105,7 +105,7 @@
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    /* overflow: hidden; */
+    overflow: hidden;
   }
 
   .sidebar-section {
@@ -382,7 +382,7 @@
 <header>
   <div class="header-title">
     Wolne Stanowiska Asesorskie 2026
-    <span>Zarządzenie Ministra Sprawiedliwości z dnia 24 lutego 2026 r. · Poz. 51</span>
+    <span>Zarządzenie Ministra Sprawiedliwości z dnia 26 marca 2026 r. · Poz. 88</span>
   </div>
   <div class="stats-bar">
     <div class="stat"><div class="stat-val" id="totalCourts">—</div><div class="stat-lbl">Sądów</div></div>
@@ -424,15 +424,13 @@
       </div>
     </div>
 
-    <div class="sidebar-section">
-      <div class="results-area" id="resultsArea">
-        <div class="no-results">Wpisz miejscowość powyżej aby zobaczyć ranking odległości sądów.</div>
-      </div>
+    <div class="results-area" id="resultsArea">
+      <div class="no-results">Wpisz miejscowość powyżej aby zobaczyć ranking odległości sądów.</div>
+    </div>
 
-      <div class="info-panel" id="infoPanel">
-        <button class="info-close" onclick="closeInfo()">✕</button>
-        <div id="infoPanelContent"></div>
-      </div>
+    <div class="info-panel" id="infoPanel">
+      <button class="info-close" onclick="closeInfo()">✕</button>
+      <div id="infoPanelContent"></div>
     </div>
   </div>
 </div>
@@ -449,7 +447,7 @@ function fixCoords(idx) { window._fixCoords && window._fixCoords(idx); }
 
 document.addEventListener('DOMContentLoaded', function() {
 // ============================================================
-// DATA — addresses from czerniakowska100.pl (official court register)
+// DATA — Poz. 88 (26 marca 2026) — aktualna lista wolnych stanowisk asesorskich
 // ============================================================
 const courts = [
   // Białystok apelacja
@@ -459,6 +457,7 @@ const courts = [
   { name: "Sąd Rejonowy w Wysokiem Mazowieckiem", city: "Wysokie Mazowieckie", addr: "ul. Ludowa 44", apelacja: "Białystok", lat: 52.91860, lng: 22.51420, vacancies: 1, wydzialy: ["I Wydział Cywilny (0.8 etatu)", "III Wydział Rodzinny i Nieletnich (0.2 etatu)"] },
   { name: "Sąd Rejonowy w Zambrowie", city: "Zambrów", addr: "al. Wojska Polskiego 56", apelacja: "Białystok", lat: 52.98388, lng: 22.24489, vacancies: 1, wydzialy: ["II Wydział Karny"] },
   { name: "Sąd Rejonowy w Bartoszycach", city: "Bartoszyce", addr: "ul. Warszawska 3", apelacja: "Białystok", lat: 54.24884, lng: 20.80701, vacancies: 2, wydzialy: ["I Wydział Cywilny", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Biskupcu", city: "Biskupiec", addr: "ul. Sądowa 2", apelacja: "Białystok", lat: 53.86230, lng: 20.96130, vacancies: 1, wydzialy: ["III Wydział Rodzinny i Nieletnich"] },
   { name: "Sąd Rejonowy w Giżycku", city: "Giżycko", addr: "ul. Warszawska 28", apelacja: "Białystok", lat: 54.03690, lng: 21.76660, vacancies: 2, wydzialy: ["I Wydział Cywilny", "II Wydział Karny"] },
   { name: "Sąd Rejonowy w Olsztynie", city: "Olsztyn", addr: "ul. Dąbrowszczaków 44", apelacja: "Białystok", lat: 53.78500, lng: 20.47380, vacancies: 1, wydzialy: ["X Wydział Cywilny"] },
   { name: "Sąd Rejonowy w Ostrołęce", city: "Ostrołęka", addr: "ul. Mazowiecka 3", apelacja: "Białystok", lat: 53.08580, lng: 21.57100, vacancies: 3, wydzialy: ["I Wydział Cywilny (2)", "II Wydział Karny"] },
@@ -470,7 +469,7 @@ const courts = [
   { name: "Sąd Rejonowy w Żninie", city: "Żnin", addr: "pl. Wolności 17", apelacja: "Gdańsk", lat: 52.84860, lng: 17.72750, vacancies: 1, wydzialy: ["II Wydział Karny"] },
   { name: "Sąd Rejonowy w Działdowie", city: "Działdowo", addr: "ul. Jagiełły 31", apelacja: "Gdańsk", lat: 53.22893, lng: 20.18233, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
   { name: "Sąd Rejonowy w Elblągu", city: "Elbląg", addr: "ul. Płk. Dąbka 8-12", apelacja: "Gdańsk", lat: 54.15680, lng: 19.40870, vacancies: 2, wydzialy: ["VIII Wydział Karny", "III Wydział Rodzinny i Nieletnich"] },
-  { name: "Sąd Rejonowy Gdańsk-Południe w Gdańsku", city: "Gdańsk", addr: "ul. Nowe Ogrody 30/34", apelacja: "Gdańsk", lat: 54.35330, lng: 18.64980, vacancies: 2, wydzialy: ["XII Wydział Cywilny", "X Wydział Karny"] },
+  { name: "Sąd Rejonowy Gdańsk-Południe w Gdańsku", city: "Gdańsk", addr: "ul. Nowe Ogrody 30/34", apelacja: "Gdańsk", lat: 54.35330, lng: 18.64980, vacancies: 3, wydzialy: ["XII Wydział Cywilny", "X Wydział Karny", "V Wydział Rodzinny i Nieletnich"] },
   { name: "Sąd Rejonowy Gdańsk-Północ w Gdańsku", city: "Gdańsk", addr: "ul. Piekarnicza 10", apelacja: "Gdańsk", lat: 54.38180, lng: 18.59810, vacancies: 1, wydzialy: ["VI Wydział Gospodarczy"] },
   { name: "Sąd Rejonowy w Kartuzach", city: "Kartuzy", addr: "ul. Kościuszki 26", apelacja: "Gdańsk", lat: 54.33260, lng: 18.20310, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy w Kwidzynie", city: "Kwidzyn", addr: "pl. Plebiscytowy 1", apelacja: "Gdańsk", lat: 53.73480, lng: 18.93870, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
@@ -480,9 +479,10 @@ const courts = [
   { name: "Sąd Rejonowy w Bytowie", city: "Bytów", addr: "ul. Zamkowa 1", apelacja: "Gdańsk", lat: 54.17310, lng: 17.49490, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
   { name: "Sąd Rejonowy w Miastku", city: "Miastko", addr: "ul. Armii Krajowej 30", apelacja: "Gdańsk", lat: 54.00270, lng: 16.97830, vacancies: 1, wydzialy: ["II Wydział Karny"] },
   { name: "Sąd Rejonowy w Słupsku", city: "Słupsk", addr: "ul. Szarych Szeregów 13", apelacja: "Gdańsk", lat: 54.46360, lng: 17.02950, vacancies: 1, wydzialy: ["II Wydział Karny"] },
-  { name: "Sąd Rejonowy w Brodnicy", city: "Brodnica", addr: "ul. Sądowa 5", apelacja: "Gdańsk", lat: 53.25950, lng: 19.39760, vacancies: 3, wydzialy: ["I Wydział Cywilny", "II Wydział Karny", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Brodnicy", city: "Brodnica", addr: "ul. Sądowa 5", apelacja: "Gdańsk", lat: 53.25950, lng: 19.39760, vacancies: 4, wydzialy: ["I Wydział Cywilny", "II Wydział Karny (2)", "III Wydział Rodzinny i Nieletnich"] },
   { name: "Sąd Rejonowy w Grudziądzu", city: "Grudziądz", addr: "ul. gen. Sikorskiego 19/23", apelacja: "Gdańsk", lat: 53.48442, lng: 18.75382, vacancies: 3, wydzialy: ["I Wydział Cywilny (3)"] },
   { name: "Sąd Rejonowy w Toruniu", city: "Toruń", addr: "ul. Fosa Staromiejska 12/14", apelacja: "Gdańsk", lat: 53.00630, lng: 18.60640, vacancies: 2, wydzialy: ["X Wydział Cywilny", "V Wydział Gospodarczy"] },
+  { name: "Sąd Rejonowy w Aleksandrowie Kujawskim", city: "Aleksandrów Kujawski", addr: "ul. Narutowicza 16", apelacja: "Gdańsk", lat: 52.87620, lng: 18.69620, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy w Rypinie", city: "Rypin", addr: "ul. Warszawska 42", apelacja: "Gdańsk", lat: 53.06570, lng: 19.93880, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy we Włocławku", city: "Włocławek", addr: "ul. Kilińskiego 20", apelacja: "Gdańsk", lat: 52.65220, lng: 19.06560, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   // Katowice apelacja
@@ -499,7 +499,10 @@ const courts = [
   { name: "Sąd Rejonowy w Kielcach", city: "Kielce", addr: "ul. Warszawska 44", apelacja: "Kraków", lat: 50.87060, lng: 20.63520, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
   { name: "Sąd Rejonowy w Końskich", city: "Końskie", addr: "ul. Odrowąża 5", apelacja: "Kraków", lat: 51.18870, lng: 20.41420, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy w Chrzanowie", city: "Chrzanów", addr: "al. Henryka 23", apelacja: "Kraków", lat: 50.13650, lng: 19.39940, vacancies: 1, wydzialy: ["II Wydział Karny"] },
+  { name: "Sąd Rejonowy dla Krakowa-Nowej Huty w Krakowie", city: "Kraków", addr: "ul. Przy Rondzie 7", apelacja: "Kraków", lat: 50.06940, lng: 19.99380, vacancies: 1, wydzialy: ["IV Wydział Pracy i Ubezpieczeń Społecznych"] },
+  { name: "Sąd Rejonowy w Myślenicach", city: "Myślenice", addr: "ul. Piłsudskiego 7a", apelacja: "Kraków", lat: 49.83280, lng: 19.93280, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy w Nowym Sączu", city: "Nowy Sącz", addr: "ul. Pijarska 3", apelacja: "Kraków", lat: 49.62470, lng: 20.70270, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Zakopanem", city: "Zakopane", addr: "ul. Gimnazjalna 13", apelacja: "Kraków", lat: 49.29470, lng: 19.94820, vacancies: 1, wydzialy: ["II Wydział Karny (0.5 etatu)", "III Wydział Rodzinny i Nieletnich (0.5 etatu)"] },
   { name: "Sąd Rejonowy w Bochni", city: "Bochnia", addr: "ul. Kościuszki 4", apelacja: "Kraków", lat: 49.97050, lng: 20.43050, vacancies: 1, wydzialy: ["III Wydział Rodzinny i Nieletnich"] },
   // Lublin apelacja
   { name: "Sąd Rejonowy w Białej Podlaskiej", city: "Biała Podlaska", addr: "ul. Brzeska 20-22", apelacja: "Lublin", lat: 52.03270, lng: 23.11820, vacancies: 1, wydzialy: ["II Wydział Karny"] },
@@ -509,6 +512,7 @@ const courts = [
   { name: "Sąd Rejonowy w Puławach", city: "Puławy", addr: "ul. Lubelska 7", apelacja: "Lublin", lat: 51.41620, lng: 21.96500, vacancies: 1, wydzialy: ["II Wydział Karny"] },
   { name: "Sąd Rejonowy w Radzyniu Podlaskim", city: "Radzyń Podlaski", addr: "ul. Jana Pawła II 2", apelacja: "Lublin", lat: 51.78470, lng: 22.62540, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy w Grójcu", city: "Grójec", addr: "ul. Sportowa 14", apelacja: "Lublin", lat: 51.86120, lng: 20.86850, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Kozienicach", city: "Kozienice", addr: "ul. Konstytucji 3 Maja 22", apelacja: "Lublin", lat: 51.58400, lng: 21.55640, vacancies: 1, wydzialy: ["II Wydział Karny"] },
   { name: "Sąd Rejonowy w Radomiu", city: "Radom", addr: "ul. Struga 63", apelacja: "Lublin", lat: 51.40280, lng: 21.14820, vacancies: 3, wydzialy: ["VII Wydział Cywilny (2)", "III Wydział Rodzinny i Nieletnich"] },
   { name: "Sąd Rejonowy w Szydłowcu", city: "Szydłowiec", addr: "pl. Marii Konopnickiej 7", apelacja: "Lublin", lat: 51.22610, lng: 20.85760, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy w Garwolinie", city: "Garwolin", addr: "al. Legionów 46", apelacja: "Lublin", lat: 51.90860, lng: 21.61540, vacancies: 1, wydzialy: ["II Wydział Karny"] },
@@ -542,7 +546,9 @@ const courts = [
   { name: "Sąd Rejonowy w Nowym Tomyślu", city: "Nowy Tomyśl", addr: "pl. Niepodległości 31", apelacja: "Poznań", lat: 52.31760, lng: 16.12660, vacancies: 2, wydzialy: ["I Wydział Cywilny", "III Wydział Rodzinny i Nieletnich"] },
   { name: "Sąd Rejonowy w Obornikach", city: "Oborniki", addr: "ul. Piłsudskiego 47", apelacja: "Poznań", lat: 52.65430, lng: 16.82890, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy Poznań-Nowe Miasto i Wilda w Poznaniu", city: "Poznań", addr: "ul. Młyńska 1a", apelacja: "Poznań", lat: 52.40720, lng: 16.92840, vacancies: 1, wydzialy: ["IV Wydział Rodzinny i Nieletnich"] },
-  { name: "Sąd Rejonowy w Trzciance", city: "Trzcianka", addr: "ul. Staszica 1", apelacja: "Poznań", lat: 53.04340, lng: 16.46450, vacancies: 3, wydzialy: ["I Wydział Cywilny", "II Wydział Karny", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy Poznań-Stare Miasto w Poznaniu", city: "Poznań", addr: "ul. Młyńska 1a", apelacja: "Poznań", lat: 52.40750, lng: 16.92810, vacancies: 1, wydzialy: ["XI Wydział Gospodarczy"] },
+  { name: "Sąd Rejonowy w Trzciance", city: "Trzcianka", addr: "ul. Staszica 1", apelacja: "Poznań", lat: 53.04340, lng: 16.46450, vacancies: 4, wydzialy: ["I Wydział Cywilny (2)", "II Wydział Karny", "III Wydział Rodzinny i Nieletnich"] },
+  { name: "Sąd Rejonowy w Krośnie Odrzańskim", city: "Krosno Odrzańskie", addr: "ul. Piastów 10L", apelacja: "Poznań", lat: 52.05360, lng: 15.09970, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy w Zielonej Górze", city: "Zielona Góra", addr: "pl. Słowiański 2", apelacja: "Poznań", lat: 51.93560, lng: 15.50690, vacancies: 1, wydzialy: ["V Wydział Gospodarczy"] },
   // Rzeszów apelacja
   { name: "Sąd Rejonowy w Lubaczowie", city: "Lubaczów", addr: "ul. Mickiewicza 21", apelacja: "Rzeszów", lat: 50.15820, lng: 23.12270, vacancies: 1, wydzialy: ["II Wydział Karny"] },
@@ -551,6 +557,7 @@ const courts = [
   // Szczecin apelacja
   { name: "Sąd Rejonowy w Gorzowie Wielkopolskim", city: "Gorzów Wlkp.", addr: "ul. Chopina 52", apelacja: "Szczecin", lat: 52.73620, lng: 15.24140, vacancies: 1, wydzialy: ["II Wydział Karny"] },
   { name: "Sąd Rejonowy w Sulęcinie", city: "Sulęcin", addr: "ul. Kościuszki 30", apelacja: "Szczecin", lat: 52.44350, lng: 15.10840, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
+  { name: "Sąd Rejonowy w Białogardzie", city: "Białogard", addr: "ul. Lipowa 1", apelacja: "Szczecin", lat: 54.00290, lng: 15.99900, vacancies: 1, wydzialy: ["VI Zamiejscowy Wydział Karny z siedzibą w Świdwinie"] },
   { name: "Sąd Rejonowy w Sławnie", city: "Sławno", addr: "ul. I Pułku Ułanów 20", apelacja: "Szczecin", lat: 54.35910, lng: 16.67940, vacancies: 1, wydzialy: ["II Wydział Karny"] },
   { name: "Sąd Rejonowy w Kamieniu Pomorskim", city: "Kamień Pomorski", addr: "ul. Sądowa 1", apelacja: "Szczecin", lat: 53.96720, lng: 14.77740, vacancies: 1, wydzialy: ["II Wydział Karny (0.5 etatu)", "III Wydział Rodzinny i Nieletnich (0.5 etatu)"] },
   { name: "Sąd Rejonowy w Łobzie", city: "Łobez", addr: "ul. Niepodległości 15", apelacja: "Szczecin", lat: 53.63910, lng: 15.61530, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
@@ -562,7 +569,7 @@ const courts = [
   { name: "Sąd Rejonowy w Grodzisku Mazowieckim", city: "Grodzisk Mazowiecki", addr: "ul. Bartniaka 21/23", apelacja: "Warszawa", lat: 52.10721, lng: 20.62984, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
   { name: "Sąd Rejonowy w Piasecznie", city: "Piaseczno", addr: "ul. Kościuszki 14", apelacja: "Warszawa", lat: 52.07980, lng: 21.02010, vacancies: 3, wydzialy: ["I Wydział Cywilny (2)", "II Wydział Karny"] },
   { name: "Sąd Rejonowy w Pruszkowie", city: "Pruszków", addr: "ul. Kraszewskiego 22", apelacja: "Warszawa", lat: 52.16700, lng: 20.80050, vacancies: 2, wydzialy: ["II Wydział Karny (2)"] },
-  { name: "Sąd Rejonowy dla m.st. Warszawy w Warszawie", city: "Warszawa", addr: "ul. Marszałkowska 82", apelacja: "Warszawa", lat: 52.22654, lng: 21.01226, vacancies: 2, wydzialy: ["I Wydział Cywilny", "IX Wydział Gospodarczy"] },
+  { name: "Sąd Rejonowy dla m.st. Warszawy w Warszawie", city: "Warszawa", addr: "ul. Marszałkowska 82", apelacja: "Warszawa", lat: 52.22654, lng: 21.01226, vacancies: 3, wydzialy: ["I Wydział Cywilny", "VIII Wydział Gospodarczy", "IX Wydział Gospodarczy"] },
   { name: "Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie", city: "Warszawa", addr: "ul. Ogrodowa 51A", apelacja: "Warszawa", lat: 52.23486, lng: 20.99447, vacancies: 4, wydzialy: ["XVI Wydział Cywilny (3)", "V Wydział Rodzinny i Nieletnich"] },
   { name: "Sąd Rejonowy dla Warszawy-Śródmieścia w Warszawie", city: "Warszawa", addr: "ul. Marszałkowska 82", apelacja: "Warszawa", lat: 52.22654, lng: 21.01226, vacancies: 1, wydzialy: ["III Wydział Rodzinny i Nieletnich"] },
   { name: "Sąd Rejonowy dla Warszawy-Woli w Warszawie", city: "Warszawa", addr: "ul. Kocjana 3", apelacja: "Warszawa", lat: 52.23741, lng: 20.94619, vacancies: 7, wydzialy: ["I Wydział Cywilny (5)", "II Wydział Cywilny (2)"] },
@@ -579,6 +586,7 @@ const courts = [
   { name: "Sąd Rejonowy w Złotoryi", city: "Złotoryja", addr: "ul. Kolejowa 3", apelacja: "Wrocław", lat: 51.12560, lng: 15.91870, vacancies: 1, wydzialy: ["II Wydział Karny (0.5 etatu)", "III Wydział Rodzinny i Nieletnich (0.5 etatu)"] },
   { name: "Sąd Rejonowy w Głubczycach", city: "Głubczyce", addr: "ul. Kochanowskiego 1", apelacja: "Wrocław", lat: 50.20320, lng: 17.83190, vacancies: 1, wydzialy: ["II Wydział Karny"] },
   { name: "Sąd Rejonowy w Kędzierzynie-Koźlu", city: "Kędzierzyn-Koźle", addr: "ul. Sądowa 6", apelacja: "Wrocław", lat: 50.34520, lng: 18.21910, vacancies: 2, wydzialy: ["I Wydział Cywilny (2)"] },
+  { name: "Sąd Rejonowy w Opolu", city: "Opole", addr: "ul. Ozimska 60A", apelacja: "Wrocław", lat: 50.66440, lng: 17.93100, vacancies: 1, wydzialy: ["V Wydział Gospodarczy"] },
   { name: "Sąd Rejonowy w Świdnicy", city: "Świdnica", addr: "ul. Różana 2", apelacja: "Wrocław", lat: 50.84690, lng: 16.48810, vacancies: 1, wydzialy: ["I Wydział Cywilny"] },
   { name: "Sąd Rejonowy w Wałbrzychu", city: "Wałbrzych", addr: "ul. Słowackiego 10", apelacja: "Wrocław", lat: 50.77420, lng: 16.28580, vacancies: 2, wydzialy: ["I Wydział Cywilny", "IV Wydział Rodzinny i Nieletnich"] },
   { name: "Sąd Rejonowy w Oleśnicy", city: "Oleśnica", addr: "ul. 3 Maja 48/49", apelacja: "Wrocław", lat: 51.20950, lng: 17.38590, vacancies: 1, wydzialy: ["II Wydział Karny"] },
@@ -681,7 +689,7 @@ function applyGpsOverrides() {
 // OVERPASS — fetch all Polish courthouses from OSM in one query
 // Runs once in browser, caches results 30 days in localStorage
 // ============================================================
-const OV_CACHE_KEY = 'sadyOverpassCache_v1';
+const OV_CACHE_KEY = 'sadyOverpassCache_v2';
 const OV_CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
 
 function loadOvCache() {
@@ -854,7 +862,7 @@ window._showCourtInfo = function showCourtInfo(idx) {
   const panel = document.getElementById('infoPanel');
   const content = document.getElementById('infoPanelContent');
 
-  const gmapsQ = encodeURIComponent(court.addr + ', ' + court.city + ', Polska');
+  const gmapsQ = encodeURIComponent(court.name + ', Polska');
   const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${gmapsQ}`;
   const directUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(court.addr + ', ' + court.city)}`;
 
