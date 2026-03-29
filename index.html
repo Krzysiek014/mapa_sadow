@@ -105,7 +105,7 @@
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    /* overflow: hidden; */
   }
 
   .sidebar-section {
@@ -424,13 +424,15 @@
       </div>
     </div>
 
-    <div class="results-area" id="resultsArea">
-      <div class="no-results">Wpisz miejscowość powyżej aby zobaczyć ranking odległości sądów.</div>
-    </div>
+    <div class="sidebar-section"></div>
+      <div class="results-area" id="resultsArea">
+        <div class="no-results">Wpisz miejscowość powyżej aby zobaczyć ranking odległości sądów.</div>
+      </div>
 
-    <div class="info-panel" id="infoPanel">
-      <button class="info-close" onclick="closeInfo()">✕</button>
-      <div id="infoPanelContent"></div>
+      <div class="info-panel" id="infoPanel">
+        <button class="info-close" onclick="closeInfo()">✕</button>
+        <div id="infoPanelContent"></div>
+      </div>
     </div>
   </div>
 </div>
