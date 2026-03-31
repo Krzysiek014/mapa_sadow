@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranking Aplikantów — Dostępność Miejsc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2230;
+    --border: #2a2f3d;
+    --accent: #e8c547;
+    --accent2: #4fc3a1;
+    --text: #e8eaf2;
+    --muted: #7a8099;
+    --red: #e85b5b;
+    --green: #4fc3a1;
+    --orange: #e88f3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .header-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent);
+    flex: 1;
+    min-width: 200px;
+  }
+  .header-title span {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+  }
+  .nav-link {
+    font-size: 0.75rem;
+    color: var(--accent2);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: background 0.15s;
+    font-family: 'DM Mono', monospace;
+  }
+  .nav-link:hover { background: var(--surface2); }
+
+  .main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    gap: 0;
+  }
+
+  /* LEFT PANEL — controls */
+  .controls {
+    width: 380px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .controls::-webkit-scrollbar { width: 4px; }
+  .controls::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .ctrl-section {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+  .section-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .rank-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .rank-input-wrap input[type=number] {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+  }
+  .rank-input-wrap input[type=number]:focus { border-color: var(--accent); }
+  .rank-input-wrap input[type=number]::-webkit-outer-spin-button,
+  .rank-input-wrap input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .my-rank-badge {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat-box .val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+  }
+  .stat-box .lbl {
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+  .val.green { color: var(--green); }
+  .val.red { color: var(--red); }
+  .val.orange { color: var(--orange); }
+
+  .legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* SEARCH */
+  .search-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    padding: 9px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  /* RIGHT — court availability list */
+  .results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+  .results::-webkit-scrollbar { width: 4px; }
+  .results::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .results-header {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .court-row {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 180px 1fr auto;
+    gap: 12px;
+    align-items: start;
+    transition: background 0.12s;
+  }
+  .court-row:hover { background: var(--surface2); }
+  .court-row.available { border-left: 3px solid var(--green); }
+  .court-row.partial  { border-left: 3px solid var(--orange); }
+  .court-row.taken    { border-left: 3px solid var(--red); opacity: 0.65; }
+  .court-row.no-data  { border-left: 3px solid var(--border); opacity: 0.5; }
+
+  .court-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    color: var(--text);
+  }
+  .court-wydzialy {
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .status-col {
+    text-align: right;
+    min-width: 110px;
+  }
+  .status-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .badge-available { background: rgba(79,195,161,0.15); color: var(--green); border: 1px solid rgba(79,195,161,0.3); }
+  .badge-partial   { background: rgba(232,143,58,0.15); color: var(--orange); border: 1px solid rgba(232,143,58,0.3); }
+  .badge-taken     { background: rgba(232,91,91,0.12); color: var(--red); border: 1px solid rgba(232,91,91,0.3); }
+  .badge-nodata    { background: rgba(122,128,153,0.1); color: var(--muted); border: 1px solid var(--border); }
+
+  .slots-info {
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .slots-info strong { color: var(--text); }
+
+  .taken-by {
+    font-size: 0.62rem;
+    color: var(--red);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+  .taken-by span { color: var(--muted); }
+
+  .empty-state {
+    padding: 60px 40px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty-state .big {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--border);
+    margin-bottom: 12px;
+  }
+
+  /* Ranking panel inside controls */
+  .ranking-list {
+    max-height: 320px;
+    overflow-y: auto;
+    font-size: 0.72rem;
+  }
+  .ranking-list::-webkit-scrollbar { width: 3px; }
+  .ranking-list::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .rank-entry {
+    display: flex;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(42,47,61,0.5);
+    align-items: flex-start;
+  }
+  .rank-entry .rn {
+    min-width: 28px;
+    color: var(--muted);
+    font-size: 0.65rem;
+    padding-top: 1px;
+  }
+  .rank-entry.is-me .rn { color: var(--accent); font-weight: 700; }
+  .rank-entry.is-me { background: rgba(232,197,71,0.05); margin: 0 -4px; padding: 5px 4px; border-radius: 4px; }
+  .rank-entry .rc {
+    flex: 1;
+    color: var(--text);
+    line-height: 1.35;
+  }
+  .rank-entry .rc.empty { color: var(--muted); font-style: italic; }
+  .rank-entry .rs {
+    color: var(--muted);
+    font-size: 0.62rem;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 800px) {
+    .main { flex-direction: column; }
+    .controls { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+    .court-row { grid-template-columns: 1fr auto; }
+    .court-row > :first-child { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    Ranking Aplikantów — Dostępność Miejsc
+    <span>Poz. 88 · 26 marca 2026 · Dane z listy rankingowej aplikantów</span>
+  </div>
+  <a href="sady_mapa.html" class="nav-link">🗺 Mapa sądów →</a>
+</header>
+
+<div class="main">
+  <!-- LEFT CONTROLS -->
+  <div class="controls">
+
+    <div class="ctrl-section">
+      <div class="section-label">Twoje miejsce w rankingu</div>
+      <div class="rank-input-wrap">
+        <input type="number" id="myRank" min="1" max="213" placeholder="np. 85" oninput="update()">
+        <div class="my-rank-badge" id="myRankBadge">—</div>
+      </div>
+      <div style="font-size:0.65rem; color:var(--muted); margin-top:6px;">
+        Wpisz swoje miejsce → zobaczysz jakie miejsca zajęły osoby wyżej i co zostało dla Ciebie
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="section-label">Podsumowanie dla Twojego miejsca</div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="val green" id="statFree">—</div>
+          <div class="lbl">Wolne wydziały</div>
+        </div>
+        <div class="stat-box">
+          <div class="val orange" id="statPartial">—</div>
+          <div class="lbl">Częściowo wolne</div>
+        </div>
+        <div class="stat-box">
+          <div class="val red" id="statTaken">—</div>
+          <div class="lbl">Zajęte</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="section-label">Szukaj sądu</div>
+      <input type="text" class="search-input" id="searchInput" placeholder="Filtruj po nazwie sądu..." oninput="update()">
+    </div>
+
+    <div class="ctrl-section" style="flex:1; min-height:0; display:flex; flex-direction:column;">
+      <div class="section-label">Osoby przed Tobą w rankingu</div>
+      <div class="ranking-list" id="rankingList">
+        <div style="color:var(--muted); font-size:0.72rem;">Wpisz swoje miejsce powyżej</div>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="section-label">Legenda</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Wolne — żadna osoba wyżej nie wybrała tego wydziału</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Częściowo wolne — część miejsc zajęta, część wolna</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Zajęte — wszystkie miejsca zajęte przez osoby wyżej</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT — court list -->
+  <div class="results" id="resultsPanel">
+    <div class="empty-state">
+      <div class="big">👆</div>
+      Wpisz swoje miejsce w rankingu aby zobaczyć dostępność miejsc
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// RANKING DATA (from CSV)
+// ============================================================
+const rankingData = [{"rank": 1, "score": "317,5", "choice": "Sąd Rejonowy w Zgierzu – II Wydział Karny"}, {"rank": 2, "score": "317", "choice": "Sąd Rejonowy w Nowym Sączu – I Wydział Cywilny"}, {"rank": 3, "score": "310,5", "choice": "Sąd Rejonowy dla Krakowa‑Nowej Huty w Krakowie – IV Wydział Pracy i Ubezpieczeń Społecznych"}, {"rank": 4, "score": "310", "choice": "Sąd Rejonowy w Środzie Śląskiej – II Wydział Karny"}, {"rank": 5, "score": "307,5", "choice": "Sąd Rejonowy Szczecin-Centrum w Szczecinie – III Wydział Cywilny"}, {"rank": 6, "score": "307,5", "choice": "Sąd Rejonowy w Słupsku – II Wydział Karny"}, {"rank": 7, "score": "306,5", "choice": "Sąd Rejonowy w Chrzanowie – II Wydział Karny"}, {"rank": 8, "score": "304,5", "choice": "Sąd Rejonowy w Nowym Tomyślu – I Wydział Cywilny"}, {"rank": 9, "score": "304", "choice": "Sąd Rejonowy w Dąbrowie Górniczej – II Wydział Karny"}, {"rank": 10, "score": "304", "choice": "Sąd Rejonowy w Toruniu – X Wydział Cywilny"}, {"rank": 11, "score": "303,5", "choice": "Sąd Rejonowy dla Wrocławia-Fabrycznej we Wrocławiu – XIV Wydział Cywilny"}, {"rank": 12, "score": "303", "choice": "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie – III Wydział Karny"}, {"rank": 13, "score": "302,5", "choice": "Sąd Rejonowy w Zgierzu – II Wydział Karny"}, {"rank": 14, "score": "302", "choice": "Sąd Rejonowy w Tarnowskich Górach – II Wydział Karny"}, {"rank": 15, "score": "300,5", "choice": "Sąd Rejonowy dla miasta stołecznego Warszawy w Warszawie – I Wydział Cywilny"}, {"rank": 16, "score": "300", "choice": "Sąd Rejonowy w Wołowie – I Wydział Cywilny"}, {"rank": 17, "score": "299,5", "choice": "Sąd Rejonowy w Otwocku – II Wydział Karny"}, {"rank": 18, "score": "298,5", "choice": "Sąd Rejonowy w Żninie – II Wydział Karny"}, {"rank": 19, "score": "298,5", "choice": "Sąd Rejonowy w Bielsku-Białej – IV Wydział Rodzinny i Nieletnich"}, {"rank": 20, "score": "297", "choice": "Sąd Rejonowy w Myślenicach – I Wydział Cywilny"}, {"rank": 21, "score": "297", "choice": "Sąd Rejonowy w Radomiu – VII Wydział Cywilny"}, {"rank": 22, "score": "297", "choice": "Sąd Rejonowy w Bochni – III Wydział Rodzinny i Nieletnich"}, {"rank": 23, "score": "296", "choice": "Sąd Rejonowy Poznań-Nowe Miasto i Wilda w Poznaniu – IV Wydział Rodzinny i Nieletnich"}, {"rank": 24, "score": "296", "choice": "Sąd Rejonowy Lublin-Zachód w Lublinie – I Wydział Cywilny"}, {"rank": 25, "score": "295", "choice": "Sąd Rejonowy w Tarnowskich Górach – II Wydział Karny"}, {"rank": 26, "score": "295", "choice": "Sąd Rejonowy dla Wrocławia-Fabrycznej we Wrocławiu – XI Wydział Cywilny"}, {"rank": 27, "score": "295", "choice": "Sąd Rejonowy dla Wrocławia-Fabrycznej we Wrocławiu – XI Wydział Cywilny"}, {"rank": 28, "score": "294,5", "choice": "Sąd Rejonowy w Gliwicach – IV Wydział Rodzinny i Nieletnich"}, {"rank": 29, "score": "294,5", "choice": "Sąd Rejonowy w Częstochowie – XI Wydział Karny"}, {"rank": 30, "score": "294", "choice": "Sąd Rejonowy w Pabianicach – I Wydział Cywilny"}, {"rank": 31, "score": "293", "choice": "Sąd Rejonowy w Częstochowie – II Wydział Cywilny"}, {"rank": 32, "score": "292,5", "choice": "Sąd Rejonowy w Chorzowie – VIII Wydział Cywilny"}, {"rank": 33, "score": "292", "choice": "Sąd Rejonowy w Obornikach – I Wydział Cywilny"}, {"rank": 34, "score": "292", "choice": "Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie – XVI Wydział Cywilny"}, {"rank": 35, "score": "292", "choice": "Sąd Rejonowy w Piotrkowie Trybunalskim – I Wydział Cywilny"}, {"rank": 36, "score": "291", "choice": "Sąd Rejonowy Gdańsk-Północ w Gdańsku – VI Wydział Gospodarczy"}, {"rank": 37, "score": "291", "choice": "Sąd Rejonowy dla miasta stołecznego Warszawy w Warszawie – VIII Wydział Gospodarczy"}, {"rank": 38, "score": "290", "choice": "Sąd Rejonowy w Łobzie – I Wydział Cywilny"}, {"rank": 39, "score": "289,5", "choice": "Sąd Rejonowy w Sosnowcu – IV Wydział Rodzinny i Nieletnich"}, {"rank": 40, "score": "289,5", "choice": "Sąd Rejonowy w Sosnowcu – IV Wydział Rodzinny i Nieletnich"}, {"rank": 41, "score": "289,5", "choice": "Sąd Rejonowy w Częstochowie – IV Wydział Karny"}, {"rank": 42, "score": "289,5", "choice": "Sąd Rejonowy w Turku – II Wydział Karny"}, {"rank": 43, "score": "289", "choice": "Sąd Rejonowy Szczecin-Prawobrzeże i Zachód w Szczecinie – V Wydział Karny"}, {"rank": 44, "score": "288,5", "choice": "Sąd Rejonowy w Stalowej Woli – II Wydział Karny"}, {"rank": 45, "score": "288,5", "choice": "Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie – XVI Wydział Cywilny"}, {"rank": 46, "score": "288,5", "choice": "Sąd Rejonowy Lublin-Wschód w Lublinie z siedzibą w Świdniku – IV Wydział Rodzinny i Nieletnich"}, {"rank": 47, "score": "288,5", "choice": "Sąd Rejonowy w Sosnowcu – IV Wydział Rodzinny i Nieletnich"}, {"rank": 48, "score": "287,5", "choice": "Sąd Rejonowy dla Wrocławia-Fabrycznej we Wrocławiu – VIII Wydział Gospodarczy"}, {"rank": 49, "score": "287,5", "choice": "Sąd Rejonowy w Inowrocławiu – I Wydział Cywilny"}, {"rank": 50, "score": "286,5", "choice": "Sąd Rejonowy w Inowrocławiu – I Wydział Cywilny"}, {"rank": 51, "score": "286,5", "choice": "Sąd Rejonowy w Elblągu – VIII Wydział Karny"}, {"rank": 52, "score": "286,5", "choice": "Sąd Rejonowy w Lubaczowie – II Wydział Karny"}, {"rank": 53, "score": "285,5", "choice": "Sąd Rejonowy w Elblągu – III Wydział Rodzinny i Nieletnich"}, {"rank": 54, "score": "285", "choice": "Sąd Rejonowy w Zielonej Górze – V Wydział Gospodarczy"}, {"rank": 55, "score": "284,5", "choice": "Sąd Rejonowy dla Łodzi-Widzewa w Łodzi – V Wydział Rodzinny i Nieletnich"}, {"rank": 56, "score": "284", "choice": "Sąd Rejonowy w Częstochowie – V Wydział Rodzinny i Nieletnich"}, {"rank": 57, "score": "283", "choice": "Sąd Rejonowy w Białymstoku – IV Wydział Rodzinny i Nieletnich"}, {"rank": 58, "score": "283", "choice": "Sąd Rejonowy w Jaworznie – I Wydział Cywilny"}, {"rank": 59, "score": "282,5", "choice": "Sąd Rejonowy w Malborku – I Wydział Cywilny"}, {"rank": 60, "score": "282,5", "choice": "Sąd Rejonowy w Sławnie – II Wydział Karny"}, {"rank": 61, "score": "282", "choice": "Sąd Rejonowy w Radomiu – VII Wydział Cywilny"}, {"rank": 62, "score": "281,5", "choice": "Sąd Rejonowy w Gliwicach – XII Wydział Gospodarczy"}, {"rank": 63, "score": "281,5", "choice": "Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie – XVI Wydział Cywilny"}, {"rank": 64, "score": "281,5", "choice": "Sąd Rejonowy w Tarnowskich Górach – VI Wydział Cywilny"}, {"rank": 65, "score": "281", "choice": "Sąd Rejonowy w Częstochowie – II Wydział Cywilny"}, {"rank": 66, "score": "281", "choice": "Sąd Rejonowy w Ostrowie Wielkopolskim – I Wydział Cywilny"}, {"rank": 67, "score": "281", "choice": "Sąd Rejonowy Gdańsk-Południe w Gdańsku – X Wydział Karny"}, {"rank": 68, "score": "280,5", "choice": "Sąd Rejonowy w Łęczycy – II Wydział Karny"}, {"rank": 69, "score": "280,5", "choice": "Sąd Rejonowy dla Warszawy Pragi- Południe w Warszawie – VI Wydział Pracy i Ubezpieczeń Społecznych"}, {"rank": 70, "score": "280", "choice": "Sąd Rejonowy w Janowie Lubelskim – III Wydział Rodzinny i Nieletnich"}, {"rank": 71, "score": "280", "choice": "Sąd Rejonowy w Tarnowskich Górach – I Wydział Cywilny"}, {"rank": 72, "score": "280", "choice": "Sąd Rejonowy w Piasecznie – I Wydział Cywilny"}, {"rank": 73, "score": "279,5", "choice": "Sąd Rejonowy dla Warszawy Pragi- Południe w Warszawie – II Wydział Cywilny"}, {"rank": 74, "score": "279,5", "choice": "Sąd Rejonowy w Głubczycach – II Wydział Karny"}, {"rank": 75, "score": "279,5", "choice": "Sąd Rejonowy w Opolu – V Wydział Gospodarczy"}, {"rank": 76, "score": "279,5", "choice": "Sąd Rejonowy w Miastku – II Wydział Karny"}, {"rank": 77, "score": "279", "choice": "Sąd Rejonowy w Grójcu – I Wydział Cywilny"}, {"rank": 78, "score": "279", "choice": "Sąd Rejonowy Gdańsk-Południe w Gdańsku – XII Wydział Cywilny"}, {"rank": 79, "score": "279", "choice": "Sąd Rejonowy dla miasta stołecznego Warszawy w Warszawie – IX Wydział Gospodarczy"}, {"rank": 80, "score": "278,5", "choice": "Sąd Rejonowy w Wołominie – V Wydział Karny"}, {"rank": 81, "score": "278", "choice": "Sąd Rejonowy w Starogardzie Gdańskim – I Wydział Cywilny"}, {"rank": 82, "score": "277,5", "choice": "Sąd Rejonowy w Stargardzie – I Wydział Cywilny"}, {"rank": 83, "score": "277", "choice": "Sąd Rejonowy w Tarnobrzegu – II Wydział Karny"}, {"rank": 84, "score": "276,5", "choice": "Sąd Rejonowy w Zakopanem – II Wydział Karny oraz III Wydział Rodzinny i Nieletnich w wymiarze po 0,5 etatu"}, {"rank": 85, "score": "276,5", "choice": "Sąd Rejonowy dla Łodzi-Śródmieścia w Łodzi – VIII Wydział Rodzinny i Nieletnich"}, {"rank": 86, "score": "276", "choice": "Sąd Rejonowy w Zawierciu – I Wydział Cywilny"}, {"rank": 87, "score": "276", "choice": "Sąd Rejonowy w Chełmie – I Wydział Cywilny"}, {"rank": 88, "score": "276", "choice": "Sąd Rejonowy w Stalowej Woli – II Wydział Karny"}, {"rank": 89, "score": "276", "choice": "Sąd Rejonowy w Świdnicy – I Wydział Cywilny"}, {"rank": 90, "score": "275,5", "choice": "Sąd Rejonowy Lublin-Zachód w Lublinie – VIII Wydział Cywilny"}, {"rank": 91, "score": "275,5", "choice": "Sąd Rejonowy w Stargardzie – I Wydział Cywilny"}, {"rank": 92, "score": "275", "choice": "Sąd Rejonowy dla Warszawy Pragi- Południe w Warszawie – I Wydział Cywilny"}, {"rank": 93, "score": "275", "choice": "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie – VII Wydział Cywilny"}, {"rank": 94, "score": "275", "choice": "Sąd Rejonowy w Kozienicach – II Wydział Karny"}, {"rank": 95, "score": "275", "choice": "Sąd Rejonowy w Radzyniu Podlaskim – I Wydział Cywilny"}, {"rank": 96, "score": "274", "choice": "Sąd Rejonowy w Myśliborzu – I Wydział Cywilny"}, {"rank": 97, "score": "274", "choice": "Sąd Rejonowy w Kielcach – I Wydział Cywilny"}, {"rank": 98, "score": "273,5", "choice": "Sąd Rejonowy w Kędzierzynie-Koźlu – I Wydział Cywilny"}, {"rank": 99, "score": "272,5", "choice": "Sąd Rejonowy w Toruniu – V Wydział Gospodarczy"}, {"rank": 100, "score": "272,5", "choice": "Sąd Rejonowy w Malborku – IV Wydział Pracy"}, {"rank": 101, "score": "272,5", "choice": "Sąd Rejonowy w Bielsku Podlaskim – I Wydział Cywilny"}, {"rank": 102, "score": "272", "choice": "Sąd Rejonowy dla Warszawy-Woli w Warszawie – I Wydział Cywilny"}, {"rank": 103, "score": "272", "choice": "Sąd Rejonowy w Gostyniu – II Wydział Karny"}, {"rank": 104, "score": "271,5", "choice": "Sąd Rejonowy w Kędzierzynie-Koźlu – I Wydział Cywilny"}, {"rank": 105, "score": "271,5", "choice": "Sąd Rejonowy w Piasecznie – I Wydział Cywilny"}, {"rank": 106, "score": "271,5", "choice": "Sąd Rejonowy w Wysokiem Mazowieckiem – I Wydział Cywilny w wymiarze 0,8 etatu oraz III Wydział Rodzinny i Nieletnich w wymiarze 0,2 etatu"}, {"rank": 107, "score": "271", "choice": "Sąd Rejonowy w Inowrocławiu – II Wydział Karny"}, {"rank": 108, "score": "270,5", "choice": "Sąd Rejonowy w Kartuzach – I Wydział Cywilny"}, {"rank": 109, "score": "270,5", "choice": "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie – I Wydział Cywilny"}, {"rank": 110, "score": "270,5", "choice": "Sąd Rejonowy w Nowym Tomyślu – III Wydział Rodzinny i Nieletnich"}, {"rank": 111, "score": "270,5", "choice": "Sąd Rejonowy w Oleśnicy – II Wydział Karny"}, {"rank": 112, "score": "270", "choice": "Sąd Rejonowy w Wysokiem Mazowieckiem – I Wydział Cywilny w wymiarze 0,8 etatu oraz III Wydział Rodzinny i Nieletnich w wymiarze 0,2 etatu"}, {"rank": 113, "score": "269,5", "choice": "Sąd Rejonowy w Puławach – II Wydział Karny"}, {"rank": 114, "score": "269", "choice": "Sąd Rejonowy we Włocławku – I Wydział Cywilny"}, {"rank": 115, "score": "269", "choice": "Sąd Rejonowy w Kielcach – I Wydział Cywilny"}, {"rank": 116, "score": "268,5", "choice": "Sąd Rejonowy dla Warszawy-Woli w Warszawie – I Wydział Cywilny"}, {"rank": 117, "score": "268", "choice": "Sąd Rejonowy dla Warszawy Pragi- Południe w Warszawie – V Wydział Rodzinny i Nieletnich"}, {"rank": 118, "score": "267,5", "choice": "Sąd Rejonowy dla Warszawy-Woli w Warszawie – I Wydział Cywilny"}, {"rank": 119, "score": "267,5", "choice": "Sąd Rejonowy w Końskich – I Wydział Cywilny"}, {"rank": 120, "score": "266", "choice": "Sąd Rejonowy w Radomiu – III Wydział Rodzinny i Nieletnich"}, {"rank": 121, "score": "266", "choice": "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie – VII Wydział Cywilny"}, {"rank": 122, "score": "265,5", "choice": "Sąd Rejonowy w Sieradzu – I Wydział Cywilny"}, {"rank": 123, "score": "265,5", "choice": "Sąd Rejonowy w Sieradzu – I Wydział Cywilny"}, {"rank": 124, "score": "265,5", "choice": "Sąd Rejonowy w Trzciance – II Wydział Karny"}, {"rank": 125, "score": "265", "choice": "Sąd Rejonowy w Grodzisku Mazowieckim – I Wydział Cywilny"}, {"rank": 126, "score": "264,5", "choice": "Sąd Rejonowy Poznań‑Stare Miasto w Poznaniu – XI Wydział Gospodarczy"}, {"rank": 127, "score": "264", "choice": "Sąd Rejonowy dla Warszawy-Woli w Warszawie – I Wydział Cywilny"}, {"rank": 128, "score": "264", "choice": "Sąd Rejonowy w Białej Podlaskiej – II Wydział Karny"}, {"rank": 129, "score": "264", "choice": "Sąd Rejonowy Gdańsk‑Południe w Gdańsku – V Wydział Rodzinny i Nieletnich"}, {"rank": 130, "score": "264", "choice": ""}, {"rank": 131, "score": "264", "choice": "Sąd Rejonowy w Żyrardowie – III Wydział Rodzinny i Nieletnich"}, {"rank": 132, "score": "263,5", "choice": ""}, {"rank": 133, "score": "263,5", "choice": "Sąd Rejonowy w Kielcach – I Wydział Cywilny"}, {"rank": 134, "score": "263", "choice": "Sąd Rejonowy w Kielcach – I Wydział Cywilny"}, {"rank": 135, "score": "263", "choice": "Sąd Rejonowy dla Warszawy-Woli w Warszawie – II Wydział Cywilny"}, {"rank": 136, "score": "262,5", "choice": "Sąd Rejonowy w Kędzierzynie-Koźlu – I Wydział Cywilny"}, {"rank": 137, "score": "262,5", "choice": "Sąd Rejonowy w Kielcach – I Wydział Cywilny"}, {"rank": 138, "score": "261,5", "choice": "Sąd Rejonowy w Aleksandrowie Kujawskim – I Wydział Cywilny"}, {"rank": 139, "score": "261,5", "choice": "Sąd Rejonowy w Ostrowie Wielkopolskim – I Wydział Cywilny"}, {"rank": 140, "score": "261", "choice": "Sąd Rejonowy w Słupcy – I Wydział Cywilny oraz III Wydział Rodzinny i Nieletnich w wymiarze po 0,5 etatu"}, {"rank": 141, "score": "260,5", "choice": "Sąd Rejonowy Szczecin-Centrum w Szczecinie – XII Wydział Gospodarczy"}, {"rank": 142, "score": "260,5", "choice": "Sąd Rejonowy w Ostrowie Wielkopolskim – I Wydział Cywilny"}, {"rank": 143, "score": "260", "choice": "Sąd Rejonowy w Wejherowie – III Wydział Rodzinny i Nieletnich"}, {"rank": 144, "score": "259,5", "choice": "Sąd Rejonowy dla Warszawy-Woli w Warszawie – I Wydział Cywilny"}, {"rank": 145, "score": "259,5", "choice": "Sąd Rejonowy dla Warszawy-Śródmieścia w Warszawie – III Wydział Rodzinny i Nieletnich"}, {"rank": 146, "score": "258,5", "choice": "Sąd Rejonowy w Lubinie – II Wydział Karny"}, {"rank": 147, "score": "258,5", "choice": "Sąd Rejonowy w Wejherowie – III Wydział Rodzinny i Nieletnich"}, {"rank": 148, "score": "258", "choice": "Sąd Rejonowy w Lwówku Śląskim – I Wydział Cywilny"}, {"rank": 149, "score": "258", "choice": "Sąd Rejonowy w Zamościu – III Wydział Rodzinny i Nieletnich"}, {"rank": 150, "score": "257,5", "choice": "Sąd Rejonowy w Szydłowcu – I Wydział Cywilny"}, {"rank": 151, "score": "257", "choice": "Sąd Rejonowy w Wałbrzychu – IV Wydział Rodzinny i Nieletnich"}, {"rank": 152, "score": "256", "choice": "Sąd Rejonowy w Siedlcach – I Wydział Cywilny"}, {"rank": 153, "score": "256", "choice": "Sąd Rejonowy w Bytowie – I Wydział Cywilny"}, {"rank": 154, "score": "256", "choice": "Sąd Rejonowy w Mogilnie – I Wydział Cywilny"}, {"rank": 155, "score": "256", "choice": "Sąd Rejonowy w Zamościu – III Wydział Rodzinny i Nieletnich"}, {"rank": 156, "score": "256", "choice": "Sąd Rejonowy w Turku – I Wydział Cywilny"}, {"rank": 157, "score": "255,5", "choice": "Sąd Rejonowy w Wałbrzychu – I Wydział Cywilny"}, {"rank": 158, "score": "255,5", "choice": "Sąd Rejonowy w Zgorzelcu – II Wydział Karny"}, {"rank": 159, "score": "255", "choice": ""}, {"rank": 160, "score": "255", "choice": "Sąd Rejonowy dla Warszawy-Woli w Warszawie – II Wydział Cywilny"}, {"rank": 161, "score": "253,5", "choice": "Sąd Rejonowy w Kamieniu Pomorskim – II Wydział Karny oraz III Wydział Rodzinny i Nieletnich w wymiarze po 0,5 etatu"}, {"rank": 162, "score": "252,5", "choice": "Sąd Rejonowy w Złotoryi – II Wydział Karny oraz III Wydział Rodzinny i Nieletnich w wymiarze po 0,5 etatu"}, {"rank": 163, "score": "252", "choice": "Sąd Rejonowy w Mogilnie – I Wydział Cywilny"}, {"rank": 164, "score": "252", "choice": ""}, {"rank": 165, "score": "252", "choice": "Sąd Rejonowy w Suwałkach – III Wydział Rodzinny i Nieletnich"}, {"rank": 166, "score": "251,5", "choice": "Sąd Rejonowy w Otwocku – II Wydział Karny"}, {"rank": 167, "score": "251,5", "choice": "Sąd Rejonowy w Sulęcinie – I Wydział Cywilny"}, {"rank": 168, "score": "251,5", "choice": "Sąd Rejonowy w Żyrardowie – III Wydział Rodzinny i Nieletnich"}, {"rank": 169, "score": "251", "choice": "Sąd Rejonowy w Stalowej Woli – II Wydział Karny"}, {"rank": 170, "score": "251", "choice": "Sąd Rejonowy w Skierniewicach – I Wydział Cywilny"}, {"rank": 171, "score": "250,5", "choice": "Sąd Rejonowy w Białogardzie – VI Zamiejscowy Wydział Karny z siedzibą w Świdwinie"}, {"rank": 172, "score": "250", "choice": ""}, {"rank": 173, "score": "249,5", "choice": "Sąd Rejonowy w Zduńskiej Woli – I Wydział Cywilny"}, {"rank": 174, "score": "249,5", "choice": "Sąd Rejonowy w Zambrowie – II Wydział Karny"}, {"rank": 175, "score": "248", "choice": ""}, {"rank": 176, "score": "248", "choice": ""}, {"rank": 177, "score": "247", "choice": ""}, {"rank": 178, "score": "247", "choice": "Sąd Rejonowy w Tomaszowie Mazowieckim – I Wydział Cywilny"}, {"rank": 179, "score": "247", "choice": ""}, {"rank": 180, "score": "247", "choice": "Sąd Rejonowy w Szydłowcu – I Wydział Cywilny"}, {"rank": 181, "score": "246,5", "choice": "Sąd Rejonowy w Lesznie – I Wydział Cywilny"}, {"rank": 182, "score": "246", "choice": "Sąd Rejonowy w Płocku – I Wydział Cywilny"}, {"rank": 183, "score": "246", "choice": ""}, {"rank": 184, "score": "246", "choice": "Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie – V Wydział Rodzinny i Nieletnich"}, {"rank": 185, "score": "245,5", "choice": ""}, {"rank": 186, "score": "244", "choice": "Sąd Rejonowy w Garwolinie – II Wydział Karny"}, {"rank": 187, "score": "243", "choice": ""}, {"rank": 188, "score": "242,5", "choice": "Sąd Rejonowy w Kwidzynie – I Wydział Cywilny"}, {"rank": 189, "score": "242,5", "choice": "Sąd Rejonowy w Żyrardowie – III Wydział Rodzinny i Nieletnich"}, {"rank": 190, "score": "242", "choice": ""}, {"rank": 191, "score": "241", "choice": ""}, {"rank": 192, "score": "240,5", "choice": ""}, {"rank": 193, "score": "240,5", "choice": "Sąd Rejonowy w Grodzisku Mazowieckim – I Wydział Cywilny"}, {"rank": 194, "score": "239,5", "choice": "Sąd Rejonowy w Oleśnicy – II Wydział Karny"}, {"rank": 195, "score": "239,5", "choice": ""}, {"rank": 196, "score": "239,5", "choice": "Sąd Rejonowy w Piasecznie – II Wydział Karny"}, {"rank": 197, "score": "239", "choice": ""}, {"rank": 198, "score": "238", "choice": ""}, {"rank": 199, "score": "238", "choice": "Sąd Rejonowy w Lwówku Śląskim – I Wydział Cywilny"}, {"rank": 200, "score": "237,5", "choice": ""}, {"rank": 201, "score": "237,5", "choice": "Sąd Rejonowy dla Warszawy-Woli w Warszawie – II Wydział Cywilny"}, {"rank": 202, "score": "236", "choice": ""}, {"rank": 203, "score": "234,5", "choice": "Sąd Rejonowy w Grudziądzu – I Wydział Cywilny"}, {"rank": 204, "score": "232,5", "choice": "Sąd Rejonowy w Otwocku – I Wydział Cywilny"}, {"rank": 205, "score": "232", "choice": "Sąd Rejonowy w Końskich – I Wydział Cywilny"}, {"rank": 206, "score": "229,5", "choice": "Sąd Rejonowy w Kielcach – I Wydział Cywilny"}, {"rank": 207, "score": "228,5", "choice": "Sąd Rejonowy w Tomaszowie Mazowieckim – I Wydział Cywilny"}, {"rank": 208, "score": "228", "choice": "Sąd Rejonowy w Bydgoszczy – V Wydział Rodzinny i Nieletnich"}, {"rank": 209, "score": "224", "choice": ""}, {"rank": 210, "score": "222,5", "choice": ""}, {"rank": 211, "score": "222", "choice": "Sąd Rejonowy w Płońsku – I Wydział Cywilny"}, {"rank": 212, "score": "214,5", "choice": ""}, {"rank": 213, "score": "213,5", "choice": ""}];
+
+// ============================================================
+// COURTS DATA (from Poz. 88) — name + total vacancies per wydział
+// ============================================================
+// Key format: "Sąd Rejonowy X – Wydział Y" -> total slots
+// Built from the official list
+const courtSlots = {
+  "Sąd Rejonowy w Białymstoku – IV Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Bielsku Podlaskim – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Bielsku Podlaskim – VII Zamiejscowy Wydział Karny z siedzibą w Hajnówce": 1,
+  "Sąd Rejonowy w Łomży – VII Zamiejscowy Wydział Karny z siedzibą w Kolnie": 1,
+  "Sąd Rejonowy w Łomży – V Wydział Gospodarczy": 1,
+  "Sąd Rejonowy w Wysokiem Mazowieckiem – I Wydział Cywilny w wymiarze 0,8 etatu oraz III Wydział Rodzinny i Nieletnich w wymiarze 0,2 etatu": 1,
+  "Sąd Rejonowy w Zambrowie – II Wydział Karny": 1,
+  "Sąd Rejonowy w Bartoszycach – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Bartoszycach – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Biskupcu – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Giżycku – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Giżycku – II Wydział Karny": 1,
+  "Sąd Rejonowy w Olsztynie – X Wydział Cywilny": 1,
+  "Sąd Rejonowy w Ostrołęce – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Ostrołęce – II Wydział Karny": 1,
+  "Sąd Rejonowy w Suwałkach – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Bydgoszczy – V Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Bydgoszczy – VI Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Inowrocławiu – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Inowrocławiu – II Wydział Karny": 1,
+  "Sąd Rejonowy w Mogilnie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Żninie – II Wydział Karny": 1,
+  "Sąd Rejonowy w Działdowie – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Elblągu – VIII Wydział Karny": 1,
+  "Sąd Rejonowy w Elblągu – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy Gdańsk-Południe w Gdańsku – XII Wydział Cywilny": 1,
+  "Sąd Rejonowy Gdańsk-Południe w Gdańsku – X Wydział Karny": 1,
+  "Sąd Rejonowy Gdańsk-Południe w Gdańsku – V Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy Gdańsk-Północ w Gdańsku – VI Wydział Gospodarczy": 1,
+  "Sąd Rejonowy w Kartuzach – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Kwidzynie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Malborku – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Malborku – IV Wydział Pracy": 1,
+  "Sąd Rejonowy w Starogardzie Gdańskim – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Wejherowie – III Wydział Rodzinny i Nieletnich": 2,
+  "Sąd Rejonowy w Bytowie – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Miastku – II Wydział Karny": 1,
+  "Sąd Rejonowy w Słupsku – II Wydział Karny": 1,
+  "Sąd Rejonowy w Brodnicy – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Brodnicy – II Wydział Karny": 2,
+  "Sąd Rejonowy w Brodnicy – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Grudziądzu – I Wydział Cywilny": 3,
+  "Sąd Rejonowy w Toruniu – X Wydział Cywilny": 1,
+  "Sąd Rejonowy w Toruniu – V Wydział Gospodarczy": 1,
+  "Sąd Rejonowy w Aleksandrowie Kujawskim – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Rypinie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy we Włocławku – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Bielsku-Białej – IV Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Częstochowie – II Wydział Cywilny": 2,
+  "Sąd Rejonowy w Częstochowie – IV Wydział Karny": 1,
+  "Sąd Rejonowy w Częstochowie – XI Wydział Karny": 1,
+  "Sąd Rejonowy w Częstochowie – V Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Gliwicach – IV Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Gliwicach – XII Wydział Gospodarczy": 1,
+  "Sąd Rejonowy w Tarnowskich Górach – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Tarnowskich Górach – VI Wydział Cywilny": 1,
+  "Sąd Rejonowy w Tarnowskich Górach – II Wydział Karny": 2,
+  "Sąd Rejonowy w Chorzowie – VIII Wydział Cywilny": 1,
+  "Sąd Rejonowy w Dąbrowie Górniczej – II Wydział Karny": 1,
+  "Sąd Rejonowy w Jaworznie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Sosnowcu – IV Wydział Rodzinny i Nieletnich": 3,
+  "Sąd Rejonowy w Zawierciu – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Kielcach – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Końskich – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Chrzanowie – II Wydział Karny": 1,
+  "Sąd Rejonowy dla Krakowa-Nowej Huty w Krakowie – IV Wydział Pracy i Ubezpieczeń Społecznych": 1,
+  "Sąd Rejonowy w Myślenicach – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Nowym Sączu – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Zakopanem – II Wydział Karny oraz III Wydział Rodzinny i Nieletnich w wymiarze po 0,5 etatu": 1,
+  "Sąd Rejonowy w Bochni – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Białej Podlaskiej – II Wydział Karny": 1,
+  "Sąd Rejonowy w Chełmie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy Lublin-Wschód w Lublinie z siedzibą w Świdniku – IV Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy Lublin-Zachód w Lublinie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy Lublin-Zachód w Lublinie – VIII Wydział Cywilny": 1,
+  "Sąd Rejonowy w Puławach – II Wydział Karny": 1,
+  "Sąd Rejonowy w Radzyniu Podlaskim – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Grójcu – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Kozienicach – II Wydział Karny": 1,
+  "Sąd Rejonowy w Radomiu – VII Wydział Cywilny": 2,
+  "Sąd Rejonowy w Radomiu – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Szydłowcu – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Garwolinie – II Wydział Karny": 1,
+  "Sąd Rejonowy w Mińsku Mazowieckim – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Mińsku Mazowieckim – II Wydział Karny": 1,
+  "Sąd Rejonowy w Siedlcach – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Janowie Lubelskim – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Zamościu – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Ostrowie Wielkopolskim – I Wydział Cywilny": 3,
+  "Sąd Rejonowy w Łęczycy – II Wydział Karny": 1,
+  "Sąd Rejonowy dla Łodzi-Śródmieścia w Łodzi – VIII Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy dla Łodzi-Widzewa w Łodzi – V Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Pabianicach – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Skierniewicach – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Zgierzu – II Wydział Karny": 2,
+  "Sąd Rejonowy w Piotrkowie Trybunalskim – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Tomaszowie Mazowieckim – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Płocku – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Płońsku – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Sierpcu – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Żyrardowie – III Wydział Rodzinny i Nieletnich": 2,
+  "Sąd Rejonowy w Sieradzu – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Zduńskiej Woli – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Słupcy – I Wydział Cywilny oraz III Wydział Rodzinny i Nieletnich w wymiarze po 0,5 etatu": 1,
+  "Sąd Rejonowy w Turku – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Turku – II Wydział Karny": 1,
+  "Sąd Rejonowy w Gostyniu – II Wydział Karny": 1,
+  "Sąd Rejonowy w Grodzisku Wielkopolskim – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Kościanie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Lesznie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Nowym Tomyślu – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Nowym Tomyślu – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Obornikach – I Wydział Cywilny": 1,
+  "Sąd Rejonowy Poznań-Nowe Miasto i Wilda w Poznaniu – IV Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy Poznań-Stare Miasto w Poznaniu – XI Wydział Gospodarczy": 1,
+  "Sąd Rejonowy w Trzciance – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Trzciance – II Wydział Karny": 1,
+  "Sąd Rejonowy w Trzciance – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Krośnie Odrzańskim – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Zielonej Górze – V Wydział Gospodarczy": 1,
+  "Sąd Rejonowy w Lubaczowie – II Wydział Karny": 1,
+  "Sąd Rejonowy w Stalowej Woli – II Wydział Karny": 2,
+  "Sąd Rejonowy w Tarnobrzegu – II Wydział Karny": 1,
+  "Sąd Rejonowy w Gorzowie Wielkopolskim – II Wydział Karny": 1,
+  "Sąd Rejonowy w Sulęcinie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Białogardzie – VI Zamiejscowy Wydział Karny z siedzibą w Świdwinie": 1,
+  "Sąd Rejonowy w Sławnie – II Wydział Karny": 1,
+  "Sąd Rejonowy w Kamieniu Pomorskim – II Wydział Karny oraz III Wydział Rodzinny i Nieletnich w wymiarze po 0,5 etatu": 1,
+  "Sąd Rejonowy w Łobzie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Myśliborzu – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Stargardzie – I Wydział Cywilny": 2,
+  "Sąd Rejonowy Szczecin-Centrum w Szczecinie – III Wydział Cywilny": 1,
+  "Sąd Rejonowy Szczecin-Centrum w Szczecinie – XII Wydział Gospodarczy": 1,
+  "Sąd Rejonowy Szczecin-Prawobrzeże i Zachód w Szczecinie – V Wydział Karny": 1,
+  "Sąd Rejonowy w Grodzisku Mazowieckim – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Piasecznie – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Piasecznie – II Wydział Karny": 1,
+  "Sąd Rejonowy w Pruszkowie – II Wydział Karny": 2,
+  "Sąd Rejonowy dla miasta stołecznego Warszawy w Warszawie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy dla miasta stołecznego Warszawy w Warszawie – VIII Wydział Gospodarczy": 1,
+  "Sąd Rejonowy dla miasta stołecznego Warszawy w Warszawie – IX Wydział Gospodarczy": 1,
+  "Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie – XVI Wydział Cywilny": 3,
+  "Sąd Rejonowy dla Warszawy-Mokotowa w Warszawie – V Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy dla Warszawy-Śródmieścia w Warszawie – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy dla Warszawy-Woli w Warszawie – I Wydział Cywilny": 5,
+  "Sąd Rejonowy dla Warszawy-Woli w Warszawie – II Wydział Cywilny": 2,
+  "Sąd Rejonowy dla Warszawy-Żoliborza w Warszawie – VI Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Otwocku – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Otwocku – II Wydział Karny": 2,
+  "Sąd Rejonowy dla Warszawy Pragi-Południe w Warszawie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy dla Warszawy Pragi-Południe w Warszawie – II Wydział Cywilny": 1,
+  "Sąd Rejonowy dla Warszawy Pragi-Południe w Warszawie – V Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy dla Warszawy Pragi-Południe w Warszawie – VI Wydział Pracy i Ubezpieczeń Społecznych": 1,
+  "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie – VII Wydział Cywilny": 2,
+  "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie – III Wydział Karny": 1,
+  "Sąd Rejonowy dla Warszawy Pragi-Północ w Warszawie – V Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Wołominie – V Wydział Karny": 1,
+  "Sąd Rejonowy w Wołominie – III Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Lubaniu – II Wydział Karny": 1,
+  "Sąd Rejonowy w Lwówku Śląskim – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Zgorzelcu – II Wydział Karny": 1,
+  "Sąd Rejonowy w Lubinie – II Wydział Karny": 1,
+  "Sąd Rejonowy w Złotoryi – II Wydział Karny oraz III Wydział Rodzinny i Nieletnich w wymiarze po 0,5 etatu": 1,
+  "Sąd Rejonowy w Głubczycach – II Wydział Karny": 1,
+  "Sąd Rejonowy w Kędzierzynie-Koźlu – I Wydział Cywilny": 2,
+  "Sąd Rejonowy w Opolu – V Wydział Gospodarczy": 1,
+  "Sąd Rejonowy w Świdnicy – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Wałbrzychu – I Wydział Cywilny": 1,
+  "Sąd Rejonowy w Wałbrzychu – IV Wydział Rodzinny i Nieletnich": 1,
+  "Sąd Rejonowy w Oleśnicy – II Wydział Karny": 1,
+  "Sąd Rejonowy w Środzie Śląskiej – II Wydział Karny": 1,
+  "Sąd Rejonowy w Wołowie – I Wydział Cywilny": 1,
+  "Sąd Rejonowy dla Wrocławia-Fabrycznej we Wrocławiu – XI Wydział Cywilny": 2,
+  "Sąd Rejonowy dla Wrocławia-Fabrycznej we Wrocławiu – XIV Wydział Cywilny": 1,
+  "Sąd Rejonowy dla Wrocławia-Fabrycznej we Wrocławiu – VIII Wydział Gospodarczy": 1,
+};
+
+// ============================================================
+// LOGIC
+// ============================================================
+
+// Normalize choice string to match courtSlots key
+// CSV uses "–" (em dash / en dash variants), slots uses " – "
+function normalizeKey(s) {
+  return s.replace(/\s*[–—-]\s*/g, ' – ').replace(/\u2011/g, '-').replace(/\s+/g, ' ').trim();
+}
+
+// Build lookup from normalized key
+const slotsNorm = {};
+for (const [k, v] of Object.entries(courtSlots)) {
+  slotsNorm[normalizeKey(k)] = v;
+}
+
+function getSlotsForChoice(choice) {
+  const norm = normalizeKey(choice);
+  if (slotsNorm[norm] !== undefined) return slotsNorm[norm];
+  // fuzzy: find best partial match
+  for (const [k, v] of Object.entries(slotsNorm)) {
+    if (k === norm) return v;
+  }
+  return null; // unknown
+}
+
+function update() {
+  const myRankVal = parseInt(document.getElementById('myRank').value);
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const badge = document.getElementById('myRankBadge');
+
+  if (!myRankVal || myRankVal < 1) {
+    badge.textContent = '—';
+    document.getElementById('resultsPanel').innerHTML = '<div class="empty-state"><div class="big">👆</div>Wpisz swoje miejsce w rankingu</div>';
+    document.getElementById('rankingList').innerHTML = '<div style="color:var(--muted); font-size:0.72rem;">Wpisz swoje miejsce powyżej</div>';
+    document.getElementById('statFree').textContent = '—';
+    document.getElementById('statPartial').textContent = '—';
+    document.getElementById('statTaken').textContent = '—';
+    return;
+  }
+
+  const myEntry = rankingData.find(r => r.rank === myRankVal);
+  badge.textContent = myEntry ? `#${myRankVal} · ${myEntry.score} pkt` : `#${myRankVal}`;
+
+  // People above me (rank < myRankVal) who made a choice
+  const above = rankingData.filter(r => r.rank < myRankVal && r.choice);
+
+  // Count how many above chose each court-wydział
+  const takenCount = {};
+  for (const r of above) {
+    const k = normalizeKey(r.choice);
+    takenCount[k] = (takenCount[k] || []);
+    takenCount[k].push(r.rank);
+  }
+
+  // Build result for each court slot
+  const results = [];
+  for (const [rawKey, totalSlots] of Object.entries(courtSlots)) {
+    const norm = normalizeKey(rawKey);
+    const taken = (takenCount[norm] || []).length;
+    const remaining = totalSlots - taken;
+    const takenByRanks = takenCount[norm] || [];
+
+    let status;
+    if (taken === 0) status = 'available';
+    else if (remaining > 0) status = 'partial';
+    else status = 'taken';
+
+    results.push({ key: rawKey, norm, totalSlots, taken, remaining, takenByRanks, status });
+  }
+
+  // Filter by search
+  const filtered = search
+    ? results.filter(r => r.key.toLowerCase().includes(search))
+    : results;
+
+  // Sort: available first, then partial, then taken; within each group alphabetically
+  const order = { available: 0, partial: 1, taken: 2 };
+  filtered.sort((a, b) => order[a.status] - order[b.status] || a.key.localeCompare(b.key, 'pl'));
+
+  // Stats
+  const nFree = results.filter(r => r.status === 'available').length;
+  const nPart = results.filter(r => r.status === 'partial').length;
+  const nTaken = results.filter(r => r.status === 'taken').length;
+  document.getElementById('statFree').textContent = nFree;
+  document.getElementById('statPartial').textContent = nPart;
+  document.getElementById('statTaken').textContent = nTaken;
+
+  // Render court list
+  if (filtered.length === 0) {
+    document.getElementById('resultsPanel').innerHTML = '<div class="empty-state"><div class="big">🔍</div>Brak wyników dla podanej frazy</div>';
+  } else {
+    const html = filtered.map(r => {
+      const [courtPart, wydzialPart] = r.key.split(' – ');
+      const takenStr = r.takenByRanks.length
+        ? `<div class="taken-by"><span>Zajęte przez miejsca: </span>#${r.takenByRanks.join(', #')}</div>` : '';
+
+      let badgeHtml, rowClass;
+      if (r.status === 'available') {
+        badgeHtml = '<span class="status-badge badge-available">Wolne</span>';
+        rowClass = 'available';
+      } else if (r.status === 'partial') {
+        badgeHtml = '<span class="status-badge badge-partial">Częściowo</span>';
+        rowClass = 'partial';
+      } else {
+        badgeHtml = '<span class="status-badge badge-taken">Zajęte</span>';
+        rowClass = 'taken';
+      }
+
+      const slotsInfo = r.totalSlots > 1
+        ? `<div class="slots-info">Wolne: <strong>${Math.max(0,r.remaining)}</strong> / ${r.totalSlots} miejsc</div>`
+        : `<div class="slots-info">${r.totalSlots} miejsce</div>`;
+
+      return `<div class="court-row ${rowClass}">
+        <div>
+          <div class="court-name">${courtPart || r.key}</div>
+          <div class="court-wydzialy">${wydzialPart || ''}</div>
+          ${slotsInfo}
+          ${takenStr}
+        </div>
+        <div></div>
+        <div class="status-col">${badgeHtml}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('resultsPanel').innerHTML = html;
+  }
+
+  // Render ranking list (show ±10 around my rank, or all above)
+  const showFrom = Math.max(1, myRankVal - 2);
+  const showTo = myRankVal;
+  const listEntries = rankingData.filter(r => r.rank >= 1 && r.rank <= showTo);
+  const listHtml = listEntries.map(r => {
+    const isMe = r.rank === myRankVal;
+    const choiceDisplay = r.choice
+      ? r.choice.replace(' – ', '<br><span style="color:var(--accent2)">↳ </span>')
+      : '<span class="empty">— brak wyboru —</span>';
+    return `<div class="rank-entry ${isMe ? 'is-me' : ''}">
+      <div class="rn">#${r.rank}</div>
+      <div class="rc ${r.choice ? '' : 'empty'}">${choiceDisplay}</div>
+      <div class="rs">${r.score}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('rankingList').innerHTML = listHtml || '<div style="color:var(--muted);font-size:0.72rem;">Brak danych</div>';
+
+  // Scroll ranking list to bottom (my entry)
+  const rl = document.getElementById('rankingList');
+  rl.scrollTop = rl.scrollHeight;
+}
+
+// Allow Enter key
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('myRank').addEventListener('keydown', e => {
+    if (e.key === 'Enter') update();
+  });
+});
+</script>
+</body>
+</html>
